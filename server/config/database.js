@@ -21,8 +21,38 @@ const sequelize = new Sequelize(
       charset: 'utf8mb4',
       collate: 'utf8mb4_unicode_ci',
       timestamps: true
+    },
+    // 데이터베이스 파일 저장 설정 추가
+    storage: './database.sqlite',  // SQLite를 사용하는 경우
+    // 또는 MySQL을 사용하는 경우
+    dialectOptions: {
+      charset: 'utf8mb4'
     }
   }
 );
+
+// 데이터베이스 연결 테스트
+sequelize.authenticate()
+  .then(() => {
+    console.log('데이터베이스 연결 성공');
+  })
+  .catch(err => {
+    console.error('데이터베이스 연결 실패:', err);
+  });
+
+// 개발 환경에서만 사용
+const syncDatabase = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
+    
+    // force: false로 변경하여 기존 테이블 유지
+    await sequelize.sync({ force: false });
+    
+    console.log('Database synchronized successfully');
+  } catch (error) {
+    console.error('Error synchronizing database:', error);
+  }
+};
 
 export default sequelize;
