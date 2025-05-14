@@ -1,0 +1,39 @@
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Post from './Post.js';
+import Like from './Like.js';
+import Comment from './Comment.js';
+
+// User와 Post 관계 설정
+Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+
+// 좋아요 관계 설정
+User.belongsToMany(Post, { 
+  through: Like,
+  as: 'likedPosts',
+  foreignKey: 'UserId',
+  otherKey: 'PostId'
+});
+
+Post.belongsToMany(User, { 
+  through: Like,
+  as: 'likedBy',
+  foreignKey: 'PostId',
+  otherKey: 'UserId'
+});
+
+// 댓글 관계 설정
+Comment.belongsTo(User, { as: 'commentAuthor', foreignKey: 'authorId' });
+Comment.belongsTo(Post, { foreignKey: 'postId' });
+Post.hasMany(Comment, { foreignKey: 'postId' });
+User.hasMany(Comment, { foreignKey: 'authorId' });
+
+// 모델 간의 관계 설정이 필요한 경우 여기에 추가
+
+export {
+  sequelize,
+  User,
+  Post,
+  Like,
+  Comment
+};

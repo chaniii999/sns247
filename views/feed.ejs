@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>피드 - SNS247</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1da1f2;
+            --secondary-color: #657786;
+            --background-color: #f5f8fa;
+            --border-color: #e1e8ed;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 10px 0;
+        }
+
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .main-content {
+            max-width: 600px;
+            margin: 60px auto 70px;
+            background-color: white;
+            min-height: calc(100vh - 130px);
+        }
+
+        /* 게시물 스타일 */
+        .post {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .post-header-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post-header-info h6 {
+            margin-bottom: 2px;
+        }
+
+        .post-time {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        .profile-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+        }
+
+        .post-content {
+            margin: 10px 0;
+            font-size: 15px;
+            line-height: 1.5;
+            width: 100%; /* 전체 너비 사용 */
+        }
+
+        /* 게시물 이미지 컨테이너 스타일 수정 */
+        .post-image-container {
+            width: 100%;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            aspect-ratio: 1;  /* 정사각형 비율 유지 */
+        }
+
+        .post-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;  /* 이미지가 컨테이너를 꽉 채우도록 설정 */
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            color: var(--secondary-color);
+            margin-top: 10px;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .action-button:hover {
+            color: var(--primary-color);
+        }
+
+        /* 하단 네비게이션 바 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 10px 0;
+        }
+
+        .nav-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .nav-item {
+            color: var(--secondary-color);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            flex: 1;
+            max-width: 80px;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        /* 새 게시물 작성 버튼 */
+        .new-post {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+
+        /* 게시물 작성 모달 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+
+        .post-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            z-index: 2001;
+        }
+
+        .post-modal textarea {
+            border: none;
+            resize: none;
+            width: 100%;
+            min-height: 100px;
+            margin: 10px 0;
+            font-size: 15px;
+        }
+
+        .post-modal textarea:focus {
+            outline: none;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* 헤더 프로필 이미지 스타일 추가 */
+        .header-profile-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+
+        /* 게시물 작성 버튼 스타일 수정 */
+        .post-button {
+            position: relative;
+            background-color: var(--primary-color);
+            color: white !important;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 0 auto;
+            flex: 0 0 auto;
+        }
+
+        .post-button i {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .post-button span {
+            display: none;
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 576px) {
+            .header-content {
+                padding: 0 15px;
+            }
+
+            .nav-content {
+                padding: 0 15px;
+            }
+
+            .nav-item {
+                max-width: 60px;
+            }
+
+            .post-button {
+                width: 48px;
+                height: 48px;
+            }
+
+            .post-button i {
+                font-size: 20px;
+            }
+
+            .post-image-container {
+                margin: 10px 0;
+            }
+        }
+
+        /* 프로필 드롭다운 메뉴 스타일 추가 */
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 8px 0;
+            min-width: 150px;
+            display: none;
+            z-index: 1001;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* 좋아요 버튼 스타일 수정 */
+        .action-button.liked {
+            color: #e0245e;
+        }
+
+        .action-button.liked i {
+            fill: currentColor;
+        }
+
+        .action-button.like-button {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .action-button.like-button:hover {
+            color: #e0245e;
+        }
+
+        /* 게시물 수정/삭제 버튼 스타일 수정 */
+        .post-actions-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .post-action-btn {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .post-action-btn:hover {
+            color: #e0245e;
+        }
+
+        .post-action-btn.edit:hover {
+            color: #1da1f2;
+        }
+
+        .post-action-btn.delete:hover {
+            color: #e0245e;
+        }
+
+        /* 수정 모달 스타일 */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .edit-modal-content {
+            position: relative;
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .edit-modal textarea {
+            width: 100%;
+            min-height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="h5 mb-0">24/7 factory </h1>
+            <div class="profile-dropdown">
+                <img src="<%= user.profileImage %>" alt="프로필" class="header-profile-image" onclick="toggleDropdown()">
+                <div class="dropdown-menu" id="profileDropdown">
+                    <a href="/profile" class="dropdown-item">
+                        <i class="bi bi-person"></i>
+                        프로필
+                    </a>
+                    <a href="/settings" class="dropdown-item">
+                        <i class="bi bi-gear"></i>
+                        설정
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="/auth/logout" class="dropdown-item">
+                        <i class="bi bi-box-arrow-right"></i>
+                        로그아웃
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <!-- 게시물 목록 -->
+        <% posts.forEach(post => { %>
+            <div class="post">
+                <% if (currentUser && post.authorId === currentUser.id) { %>
+                    <div class="post-actions-menu">
+                        <button class="post-action-btn edit" onclick="openEditModal('<%= post.id %>', '<%= post.content %>')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="post-action-btn delete" onclick="deletePost('<%= post.id %>')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                <% } %>
+                <div class="post-header">
+                    <a href="/profile/<%= post.author.id %>" class="text-decoration-none">
+                        <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
+                             alt="프로필" 
+                             class="profile-image">
+                    </a>
+                    <div class="post-header-info">
+                        <a href="/profile/<%= post.author.id %>" class="text-decoration-none text-dark">
+                            <h6 class="mb-0"><%= post.author.name %></h6>
+                        </a>
+                        <span class="post-time">
+                            <%= new Date(post.createdAt).toLocaleString('ko-KR') %>
+                        </span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <%= post.content %>
+                </div>
+                <% if (post.imageUrl) { %>
+                    <div class="post-image-container">
+                        <img src="<%= post.imageUrl %>" alt="게시물 이미지" class="post-image">
+                    </div>
+                <% } %>
+                <div class="post-actions">
+                    <div class="action-button like-button <%= post.likedBy.some(user => user.id === currentUser.id) ? 'liked' : '' %>" 
+                         data-post-id="<%= post.id %>" 
+                         data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>">
+                        <i class="bi bi-heart<%= post.likedBy.some(user => user.id === currentUser.id) ? '-fill' : '' %>"></i>
+                        <span class="likes-count"><%= post.likes %></span>
+                    </div>
+                    <div class="action-button">
+                        <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
+                            <i class="bi bi-chat"></i>
+                            <span><%= post.comments?.length || 0 %></span>
+                        </a>
+                    </div>
+                    <div class="action-button">
+                        <i class="bi bi-repeat"></i>
+                        <span><%= post.reposts %></span>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <div class="nav-content">
+            <a href="/feed" class="nav-item active">
+                <i class="bi bi-house-fill"></i>
+                <span>홈</span>
+            </a>
+            <a href="/search" class="nav-item">
+                <i class="bi bi-search"></i>
+                <span>검색</span>
+            </a>
+            <div class="nav-item post-button" onclick="showPostModal()">
+                <i class="bi bi-plus-lg"></i>
+                <span>게시</span>
+            </div>
+            <a href="/notifications" class="nav-item">
+                <i class="bi bi-bell"></i>
+                <span>알림</span>
+            </a>
+            <a href="/profile" class="nav-item">
+                <i class="bi bi-person"></i>
+                <span>프로필</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 게시물 작성 모달 -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="post-modal" id="postModal">
+        <form action="/feed" method="POST" enctype="multipart/form-data">
+            <div class="post-header">
+                <img src="<%= user.profileImage %>" alt="프로필" class="profile-image">
+                <div>
+                    <h6 class="mb-0"><%= user.name %></h6>
+                    <small class="text-muted">@<%= user.email.split('@')[0] %></small>
+                </div>
+            </div>
+            <textarea name="content" placeholder="무슨 일이 일어나고 있나요?" required></textarea>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <label class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-image"></i> 이미지 추가
+                        <input type="file" name="image" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                    </label>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary me-2" onclick="hidePostModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">게시</button>
+                </div>
+            </div>
+            <img id="imagePreview" class="image-preview" src="" alt="미리보기">
+        </form>
+    </div>
+
+    <!-- 수정 모달 추가 -->
+    <div id="editModal" class="edit-modal">
+        <div class="edit-modal-content">
+            <h5>게시물 수정</h5>
+            <textarea id="editContent"></textarea>
+            <div class="d-flex justify-content-end gap-2">
+                <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+                <button class="btn btn-primary" onclick="updatePost()">수정</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPostModal() {
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        function hidePostModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('postModal').style.display = 'none';
+        }
+
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 드롭다운 메뉴 토글 함수
+        function toggleDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 드롭다운 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            if (!event.target.matches('.header-profile-image')) {
+                const dropdowns = document.getElementsByClassName('dropdown-menu');
+                for (let dropdown of dropdowns) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hidePostModal();
+            }
+        });
+
+        // 오버레이 클릭으로 모달 닫기
+        document.getElementById('modalOverlay').addEventListener('click', hidePostModal);
+
+        // 좋아요 기능
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', async function() {
+                const postId = this.dataset.postId;
+                const isLiked = this.dataset.liked === 'true';
+                
+                try {
+                    const response = await fetch(`/feed/${postId}/like`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        const icon = this.querySelector('i');
+                        const countSpan = this.querySelector('.likes-count');
+                        
+                        if (data.liked) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            this.classList.add('liked');
+                        } else {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            this.classList.remove('liked');
+                        }
+                        
+                        countSpan.textContent = data.likes;
+                        this.dataset.liked = data.liked;
+                    }
+                } catch (error) {
+                    console.error('Error toggling like:', error);
+                }
+            });
+        });
+
+        let currentEditPostId = null;
+
+        function openEditModal(postId, content) {
+            currentEditPostId = postId;
+            document.getElementById('editContent').value = content;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditPostId = null;
+        }
+
+        async function updatePost() {
+            if (!currentEditPostId) return;
+
+            const content = document.getElementById('editContent').value;
+            
+            try {
+                const response = await fetch(`/feed/${currentEditPostId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('게시물 수정에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error updating post:', error);
+                alert('게시물 수정 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/feed/${postId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('게시물 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                alert('게시물 삭제 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>
