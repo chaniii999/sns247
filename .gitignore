@@ -5,7 +5,7 @@
 
 # Dependencies
 node_modules/
-public/upload/*
+public/uploads/*
 # Logs
 logs
 *.log
