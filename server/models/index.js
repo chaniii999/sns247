@@ -3,6 +3,9 @@ import User from './User.js';
 import Post from './Post.js';
 import Like from './Like.js';
 import Comment from './Comment.js';
+import NotificationFactory from './notification.js';
+
+const Notification = NotificationFactory(sequelize);
 
 // User와 Post 관계 설정
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
@@ -28,6 +31,9 @@ Comment.belongsTo(Post, { foreignKey: 'postId' });
 Post.hasMany(Comment, { foreignKey: 'postId' });
 User.hasMany(Comment, { foreignKey: 'authorId' });
 
+// Notification 관계 설정
+Notification.associate?.({ User, Post });
+
 // 모델 간의 관계 설정이 필요한 경우 여기에 추가
 
 export {
@@ -35,5 +41,6 @@ export {
   User,
   Post,
   Like,
-  Comment
+  Comment,
+  Notification
 };

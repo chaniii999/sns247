@@ -1,0 +1,70 @@
+<!-- 헤더 -->
+<div class="header">
+    <div class="header-content">
+        <a href="/feed" class="text-decoration-none">
+            <h5 class="mb-0">SNS247</h5>
+        </a>
+        <div class="search-input-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" 
+                   class="search-input" 
+                   placeholder="검색어를 입력하세요"
+                   id="searchInput">
+        </div>
+        <div class="ms-auto position-relative">
+            <img src="<%= currentUser.profileImage || '/images/default-profile.png' %>" 
+                 alt="프로필" 
+                 class="profile-image"
+                 style="width: 32px; height: 32px; cursor: pointer;"
+                 onclick="toggleProfileDropdown()">
+            <%- include('profile-dropdown') %>
+        </div>
+    </div>
+</div>
+
+<!-- 네비게이션 바 -->
+<nav class="navbar fixed-bottom bg-white border-top">
+    <div class="container">
+        <div class="row w-100">
+            <div class="col text-center">
+                <a href="/feed" class="nav-link <%= currentPage === 'feed' ? 'text-primary' : 'text-muted' %>">
+                    <i class="bi bi-house-door-fill"></i>
+                </a>
+            </div>
+            <div class="col text-center">
+                <a href="/search" class="nav-link <%= currentPage === 'search' ? 'text-primary' : 'text-muted' %>">
+                    <i class="bi bi-search"></i>
+                </a>
+            </div>
+            <div class="col text-center">
+                <a href="/notifications" class="nav-link <%= currentPage === 'notifications' ? 'text-primary' : 'text-muted' %>">
+                    <i class="bi bi-bell-fill"></i>
+                </a>
+            </div>
+            <div class="col text-center">
+                <a href="/profile/<%= currentUser.id %>" class="nav-link <%= currentPage === 'profile' ? 'text-primary' : 'text-muted' %>">
+                    <i class="bi bi-person-fill"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    dropdown.classList.toggle('show');
+}
+
+// 드롭다운 외부 클릭 시 닫기
+window.onclick = function(event) {
+    if (!event.target.matches('.profile-image')) {
+        const dropdowns = document.getElementsByClassName('dropdown-content');
+        for (let dropdown of dropdowns) {
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    }
+}
+</script> 

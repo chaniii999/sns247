@@ -1,0 +1,146 @@
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <div class="nav-content">
+        <a href="/feed" class="nav-item <%= (typeof currentPage !== 'undefined' && currentPage === 'feed') ? 'active' : '' %>">
+            <i class="bi bi-house<%= (typeof currentPage !== 'undefined' && currentPage === 'feed') ? '-fill' : '' %>"></i>
+            <span>홈</span>
+        </a>
+        <a href="/search" class="nav-item <%= (typeof currentPage !== 'undefined' && currentPage === 'search') ? 'active' : '' %>">
+            <i class="bi bi-search"></i>
+            <span>검색</span>
+        </a>
+        <div class="nav-item post-button" onclick="showPostModal()">
+            <i class="bi bi-plus-lg"></i>
+            <span>게시</span>
+        </div>
+        <a href="/notifications" class="nav-item <%= (typeof currentPage !== 'undefined' && currentPage === 'notifications') ? 'active' : '' %>">
+            <i class="bi bi-bell"></i>
+            <span>알림</span>
+        </a>
+        <a href="/profile" class="nav-item <%= (typeof currentPage !== 'undefined' && currentPage === 'profile') ? 'active' : '' %>">
+            <i class="bi bi-person"></i>
+            <span>프로필</span>
+        </a>
+    </div>
+</nav>
+
+<!-- 새 게시물 작성 버튼 -->
+<% if (typeof currentPage === 'undefined' || currentPage !== 'post-detail') { %>
+    <div class="new-post" onclick="showPostModal()">
+        <i class="bi bi-plus-lg"></i>
+    </div>
+<% } %>
+
+<style>
+    /* 하단 네비게이션 바 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border-top: 1px solid var(--border-color);
+        z-index: 1000;
+        padding: 10px 0;
+    }
+
+    .nav-content {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+
+    .nav-item {
+        color: var(--secondary-color);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 12px;
+        flex: 1;
+        max-width: 80px;
+    }
+
+    .nav-item i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .nav-item.active {
+        color: var(--primary-color);
+    }
+
+    /* 새 게시물 작성 버튼 */
+    .new-post {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 999;
+    }
+
+    /* 게시물 작성 버튼 스타일 */
+    .post-button {
+        position: relative;
+        background-color: var(--primary-color);
+        color: white !important;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin: 0 auto;
+        flex: 0 0 auto;
+    }
+
+    .post-button i {
+        font-size: 24px;
+        margin: 0;
+    }
+
+    .post-button span {
+        display: none;
+    }
+
+    /* 모바일 최적화 */
+    @media (max-width: 576px) {
+        .nav-content {
+            padding: 0 15px;
+        }
+
+        .nav-item {
+            max-width: 60px;
+        }
+
+        .post-button {
+            width: 48px;
+            height: 48px;
+        }
+
+        .post-button i {
+            font-size: 20px;
+        }
+    }
+</style>
+
+<script>
+    function showPostModal() {
+        document.getElementById('modalOverlay').style.display = 'block';
+        document.getElementById('postModal').style.display = 'block';
+    }
+</script> 

@@ -338,6 +338,14 @@
                 <h5 class="mb-0"><%= profileUser.name %></h5>
                 <small class="text-muted"><%= posts.length %> 게시물</small>
             </div>
+            <div class="ms-auto position-relative">
+                <img src="<%= currentUser.profileImage || '/images/default-profile.png' %>" 
+                     alt="프로필" 
+                     class="profile-image"
+                     style="width: 32px; height: 32px; cursor: pointer;"
+                     onclick="toggleProfileDropdown()">
+                <%- include('partials/profile-dropdown') %>
+            </div>
         </div>
     </div>
 
@@ -378,7 +386,7 @@
             </div>
         <% } else { %>
             <% posts.forEach(post => { %>
-                <div class="post">
+                <div class="post" onclick="window.location.href='/comments/post/<%= post.id %>'" style="cursor: pointer;">
                     <div class="post-header">
                         <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
                              alt="프로필" 
@@ -404,17 +412,18 @@
                     <div class="post-actions">
                         <div class="action-button like-button <%= post.likedBy.some(user => user.id === currentUser.id) ? 'liked' : '' %>" 
                              data-post-id="<%= post.id %>" 
-                             data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>">
+                             data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>"
+                             onclick="event.stopPropagation();">
                             <i class="bi bi-heart<%= post.likedBy.some(user => user.id === currentUser.id) ? '-fill' : '' %>"></i>
                             <span class="likes-count"><%= post.likedBy?.length || 0 %></span>
                         </div>
-                        <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
-                            <div class="action-button">
+                        <div class="action-button" onclick="event.stopPropagation();">
+                            <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
                                 <i class="bi bi-chat"></i>
                                 <span><%= post.comments?.length || 0 %></span>
-                            </div>
-                        </a>
-                        <div class="action-button">
+                            </a>
+                        </div>
+                        <div class="action-button" onclick="event.stopPropagation();">
                             <i class="bi bi-repeat"></i>
                             <span>0</span>
                         </div>
@@ -424,32 +433,7 @@
         <% } %>
     </div>
 
-    <!-- 하단 네비게이션 -->
-    <div class="bottom-nav">
-        <div class="nav-content">
-            <a href="/feed" class="nav-item">
-                <i class="bi bi-house"></i>
-                <span>홈</span>
-            </a>
-            <a href="/search" class="nav-item">
-                <i class="bi bi-search"></i>
-                <span>검색</span>
-            </a>
-            <a href="/notifications" class="nav-item">
-                <i class="bi bi-bell"></i>
-                <span>알림</span>
-            </a>
-            <a href="/profile" class="nav-item active">
-                <i class="bi bi-person"></i>
-                <span>프로필</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- 새 게시물 작성 버튼 -->
-    <div class="new-post" onclick="openPostModal()">
-        <i class="bi bi-plus-lg"></i>
-    </div>
+    <%- include('partials/navigation') %>
 
     <!-- 프로필 수정 모달 -->
     <div class="profile-edit-modal" id="profileEditModal">

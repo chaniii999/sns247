@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "qwer1234",
+    "database": "sns247_development",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "qwer1234",
+    "database": "sns247_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "qwer1234",
+    "database": "sns247_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}

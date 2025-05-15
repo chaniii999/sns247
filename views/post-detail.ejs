@@ -124,14 +124,12 @@
 
         /* 댓글 작성 폼 */
         .comment-form {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            padding: 15px;
             background-color: white;
-            border-top: 1px solid var(--border-color);
-            padding: 10px 15px;
-            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 60px;
+            z-index: 100;
         }
 
         .comment-input-container {
@@ -167,6 +165,110 @@
         .comment-submit:hover {
             opacity: 0.9;
         }
+
+        .comments {
+            background-color: white;
+        }
+
+        .comment {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .comment-content {
+            margin-left: 58px;
+        }
+
+        .profile-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* 프로필 수정 모달 스타일 */
+        .profile-edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .profile-edit-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-edit-content {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .profile-edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-edit-header h5 {
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+
+        .profile-edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .profile-edit-form input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .profile-edit-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .profile-edit-form button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .profile-edit-form button:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -177,6 +279,14 @@
                 <i class="bi bi-arrow-left"></i>
             </a>
             <h5 class="mb-0">게시물</h5>
+            <div class="ms-auto position-relative">
+                <img src="<%= currentUser.profileImage || '/images/default-profile.png' %>" 
+                     alt="프로필" 
+                     class="profile-image"
+                     style="width: 32px; height: 32px; cursor: pointer;"
+                     onclick="toggleProfileDropdown()">
+                <%- include('partials/profile-dropdown') %>
+            </div>
         </div>
     </div>
 
@@ -211,102 +321,65 @@
             <% } %>
         </div>
 
-        <!-- 댓글 섹션 -->
-        <div class="comments-section">
-            <% if (comments.length === 0) { %>
-                <div class="text-center text-muted">
-                    아직 댓글이 없습니다.
-                </div>
-            <% } else { %>
-                <% comments.forEach(comment => { %>
-                    <div class="comment" id="comment-<%= comment.id %>">
-                        <div class="comment-header">
-                            <a href="/profile/<%= comment.commentAuthor.id %>" class="text-decoration-none">
-                                <img src="<%= comment.commentAuthor.profileImage || '/images/default-profile.png' %>" 
-                                     alt="프로필" 
-                                     class="profile-image">
-                            </a>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <a href="/profile/<%= comment.commentAuthor.id %>" class="text-decoration-none text-dark">
-                                            <strong><%= comment.commentAuthor.name %></strong>
-                                        </a>
-                                        <span class="comment-time">
-                                            <%= new Date(comment.createdAt).toLocaleString('ko-KR') %>
-                                        </span>
-                                    </div>
-                                    <% if (currentUser && currentUser.id === comment.commentAuthor.id) { %>
-                                        <div class="dropdown">
-                                            <button class="btn btn-link text-secondary p-0" 
-                                                    type="button" 
-                                                    data-bs-toggle="dropdown">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <button class="dropdown-item" 
-                                                            onclick="editComment(<%= comment.id %>, '<%= comment.content %>')">
-                                                        수정
-                                                    </button>
-                                                </li>
-                                                <li>
-                                                    <button class="dropdown-item text-danger" 
-                                                            onclick="deleteComment(<%= comment.id %>)">
-                                                        삭제
-                                                    </button>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    <% } %>
-                                </div>
-                                <div class="comment-content" id="comment-content-<%= comment.id %>">
-                                    <%= comment.content %>
-                                </div>
-                                <div class="comment-edit-form" id="comment-edit-form-<%= comment.id %>" style="display: none;">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           value="<%= comment.content %>"
-                                           id="edit-input-<%= comment.id %>">
-                                    <div class="mt-2">
-                                        <button class="btn btn-primary btn-sm" 
-                                                onclick="updateComment(<%= comment.id %>)">
-                                            저장
-                                        </button>
-                                        <button class="btn btn-secondary btn-sm" 
-                                                onclick="cancelEdit(<%= comment.id %>)">
-                                            취소
-                                        </button>
-                                    </div>
-                                </div>
+        <!-- 댓글 작성 폼 -->
+        <div class="comment-form">
+            <form id="commentForm" class="d-flex gap-2">
+                <input type="text" class="form-control" placeholder="댓글을 작성하세요..." required>
+                <button type="submit" class="btn btn-primary">작성</button>
+            </form>
+        </div>
+
+        <!-- 댓글 목록 -->
+        <div class="comments">
+            <% comments.forEach(comment => { %>
+                <div class="comment">
+                    <div class="comment-header">
+                        <img src="<%= comment.commentAuthor.profileImage || '/images/default-profile.png' %>" 
+                             alt="프로필" 
+                             class="profile-image">
+                        <div>
+                            <strong><%= comment.commentAuthor.name %></strong>
+                            <div class="text-muted" style="font-size: 14px;">
+                                <%= new Date(comment.createdAt).toLocaleString('ko-KR') %>
                             </div>
                         </div>
                     </div>
-                <% }); %>
-            <% } %>
+                    <div class="comment-content">
+                        <%= comment.content %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+
+        <%- include('partials/navigation') %>
+    </div>
+
+    <!-- 프로필 수정 모달 -->
+    <div class="profile-edit-modal" id="profileEditModal">
+        <div class="profile-edit-content">
+            <div class="profile-edit-header">
+                <h5>프로필 수정</h5>
+                <button class="close-modal" onclick="closeProfileEditModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form class="profile-edit-form" id="profileEditForm">
+                <input type="text" 
+                       id="newName" 
+                       name="newName" 
+                       placeholder="새로운 닉네임" 
+                       value="<%= currentUser.name %>"
+                       required>
+                <button type="submit">저장</button>
+            </form>
         </div>
     </div>
 
-    <!-- 댓글 작성 폼 -->
-    <form class="comment-form" id="commentForm">
-        <div class="comment-input-container">
-            <input type="text" 
-                   class="comment-input" 
-                   placeholder="댓글을 입력하세요..." 
-                   required>
-            <button type="submit" class="comment-submit">게시</button>
-        </div>
-    </form>
-
     <script>
-        // 댓글 작성 처리
         document.getElementById('commentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const input = this.querySelector('input');
-            const content = input.value.trim();
-            
-            if (!content) return;
+            const content = this.querySelector('input').value;
             
             try {
                 const response = await fetch('/comments/post/<%= post.id %>', {
@@ -318,120 +391,58 @@
                 });
                 
                 if (response.ok) {
-                    const comment = await response.json();
-                    
-                    // 새 댓글 추가
-                    const commentsSection = document.querySelector('.comments-section');
-                    const noComments = commentsSection.querySelector('.text-center');
-                    
-                    if (noComments) {
-                        commentsSection.innerHTML = '';
-                    }
-                    
-                    const commentElement = document.createElement('div');
-                    commentElement.className = 'comment';
-                    commentElement.innerHTML = `
-                        <div class="comment-header">
-                            <a href="/profile/${comment.commentAuthor.id}" class="text-decoration-none">
-                                <img src="${comment.commentAuthor.profileImage || '/images/default-profile.png'}" 
-                                     alt="프로필" 
-                                     class="profile-image">
-                            </a>
-                            <div>
-                                <a href="/profile/${comment.commentAuthor.id}" class="text-decoration-none text-dark">
-                                    <strong>${comment.commentAuthor.name}</strong>
-                                </a>
-                                <span class="comment-time">
-                                    ${new Date(comment.createdAt).toLocaleString('ko-KR')}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="comment-content">
-                            ${comment.content}
-                        </div>
-                    `;
-                    
-                    commentsSection.appendChild(commentElement);
-                    input.value = '';
+                    window.location.reload();
                 } else {
                     alert('댓글 작성에 실패했습니다.');
                 }
             } catch (error) {
-                console.error('Error posting comment:', error);
+                console.error('Error creating comment:', error);
                 alert('댓글 작성 중 오류가 발생했습니다.');
             }
         });
 
-        // 댓글 수정 폼 표시
-        function editComment(commentId, content) {
-            document.getElementById(`comment-content-${commentId}`).style.display = 'none';
-            document.getElementById(`comment-edit-form-${commentId}`).style.display = 'block';
-            document.getElementById(`edit-input-${commentId}`).value = content;
+        // 프로필 수정 모달 관련 함수
+        function openProfileEditModal() {
+            document.getElementById('profileEditModal').classList.add('active');
         }
 
-        // 댓글 수정 취소
-        function cancelEdit(commentId) {
-            document.getElementById(`comment-content-${commentId}`).style.display = 'block';
-            document.getElementById(`comment-edit-form-${commentId}`).style.display = 'none';
+        function closeProfileEditModal() {
+            document.getElementById('profileEditModal').classList.remove('active');
         }
 
-        // 댓글 수정 저장
-        async function updateComment(commentId) {
-            const content = document.getElementById(`edit-input-${commentId}`).value.trim();
+        // 프로필 수정 폼 제출 처리
+        document.getElementById('profileEditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            if (!content) return;
+            const newName = document.getElementById('newName').value;
             
             try {
-                const response = await fetch(`/comments/${commentId}`, {
-                    method: 'PUT',
+                const response = await fetch('/profile/update-name', {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ content })
+                    body: JSON.stringify({ name: newName })
                 });
                 
                 if (response.ok) {
-                    const comment = await response.json();
-                    document.getElementById(`comment-content-${commentId}`).textContent = comment.content;
-                    cancelEdit(commentId);
+                    // 성공 시 페이지 새로고침
+                    window.location.reload();
                 } else {
-                    alert('댓글 수정에 실패했습니다.');
+                    alert('닉네임 변경에 실패했습니다.');
                 }
             } catch (error) {
-                console.error('Error updating comment:', error);
-                alert('댓글 수정 중 오류가 발생했습니다.');
+                console.error('Error updating profile:', error);
+                alert('닉네임 변경 중 오류가 발생했습니다.');
             }
-        }
+        });
 
-        // 댓글 삭제
-        async function deleteComment(commentId) {
-            if (!confirm('댓글을 삭제하시겠습니까?')) return;
-            
-            try {
-                const response = await fetch(`/comments/${commentId}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    document.getElementById(`comment-${commentId}`).remove();
-                    
-                    // 댓글이 없어진 경우 메시지 표시
-                    const commentsSection = document.querySelector('.comments-section');
-                    if (commentsSection.children.length === 0) {
-                        commentsSection.innerHTML = `
-                            <div class="text-center text-muted">
-                                아직 댓글이 없습니다.
-                            </div>
-                        `;
-                    }
-                } else {
-                    alert('댓글 삭제에 실패했습니다.');
-                }
-            } catch (error) {
-                console.error('Error deleting comment:', error);
-                alert('댓글 삭제 중 오류가 발생했습니다.');
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('profileEditModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProfileEditModal();
             }
-        }
+        });
     </script>
 </body>
 </html>

@@ -14,6 +14,8 @@ import Like from './server/models/Like.js';
 import profileRouter from './server/routes/profile.js';
 import commentRoutes from './server/routes/comments.js';
 import Comment from './server/models/Comment.js';
+import searchRoutes from './server/routes/search.js';
+import notificationRoutes from './server/routes/notifications.js';
 
 // 환경 변수 설정
 dotenv.config();
@@ -53,6 +55,8 @@ app.use('/auth', authRoutes);
 app.use('/feed', postRoutes);
 app.use('/profile', profileRouter);
 app.use('/comments', commentRoutes);
+app.use('/search', searchRoutes);
+app.use('/notifications', notificationRoutes);
 
 // 루트 경로 리다이렉션
 app.get('/', (req, res) => {

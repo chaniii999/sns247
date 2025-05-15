@@ -459,13 +459,13 @@
     <main class="main-content">
         <!-- 게시물 목록 -->
         <% posts.forEach(post => { %>
-            <div class="post">
+            <div class="post" onclick="window.location.href='/comments/post/<%= post.id %>'" style="cursor: pointer;">
                 <% if (currentUser && post.authorId === currentUser.id) { %>
                     <div class="post-actions-menu">
-                        <button class="post-action-btn edit" onclick="openEditModal('<%= post.id %>', '<%= post.content %>')">
+                        <button class="post-action-btn edit" onclick="event.stopPropagation(); openEditModal('<%= post.id %>', '<%= post.content %>')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="post-action-btn delete" onclick="deletePost('<%= post.id %>')">
+                        <button class="post-action-btn delete" onclick="event.stopPropagation(); deletePost('<%= post.id %>')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -496,17 +496,18 @@
                 <div class="post-actions">
                     <div class="action-button like-button <%= post.likedBy.some(user => user.id === currentUser.id) ? 'liked' : '' %>" 
                          data-post-id="<%= post.id %>" 
-                         data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>">
+                         data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>"
+                         onclick="event.stopPropagation();">
                         <i class="bi bi-heart<%= post.likedBy.some(user => user.id === currentUser.id) ? '-fill' : '' %>"></i>
                         <span class="likes-count"><%= post.likes %></span>
                     </div>
-                    <div class="action-button">
+                    <div class="action-button" onclick="event.stopPropagation();">
                         <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
                             <i class="bi bi-chat"></i>
                             <span><%= post.comments?.length || 0 %></span>
                         </a>
                     </div>
-                    <div class="action-button">
+                    <div class="action-button" onclick="event.stopPropagation();">
                         <i class="bi bi-repeat"></i>
                         <span><%= post.reposts %></span>
                     </div>
@@ -515,31 +516,7 @@
         <% }); %>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <nav class="bottom-nav">
-        <div class="nav-content">
-            <a href="/feed" class="nav-item active">
-                <i class="bi bi-house-fill"></i>
-                <span>홈</span>
-            </a>
-            <a href="/search" class="nav-item">
-                <i class="bi bi-search"></i>
-                <span>검색</span>
-            </a>
-            <div class="nav-item post-button" onclick="showPostModal()">
-                <i class="bi bi-plus-lg"></i>
-                <span>게시</span>
-            </div>
-            <a href="/notifications" class="nav-item">
-                <i class="bi bi-bell"></i>
-                <span>알림</span>
-            </a>
-            <a href="/profile" class="nav-item">
-                <i class="bi bi-person"></i>
-                <span>프로필</span>
-            </a>
-        </div>
-    </nav>
+    <%- include('partials/navigation') %>
 
     <!-- 게시물 작성 모달 -->
     <div class="modal-overlay" id="modalOverlay"></div>

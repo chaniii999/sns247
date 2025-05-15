@@ -1,0 +1,71 @@
+<!-- 프로필 드롭다운 메뉴 -->
+<div class="dropdown-content" id="profileDropdown">
+    <a href="/profile/<%= currentUser.id %>" class="dropdown-item">
+        <i class="bi bi-person"></i> 프로필
+    </a>
+    <a href="/settings" class="dropdown-item">
+        <i class="bi bi-gear"></i> 설정
+    </a>
+    <div class="dropdown-divider"></div>
+    <a href="/auth/logout" class="dropdown-item text-danger">
+        <i class="bi bi-box-arrow-right"></i> 로그아웃
+    </a>
+</div>
+
+<style>
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    z-index: 1000;
+    margin-top: 8px;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-item {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-divider {
+    border-top: 1px solid #dee2e6;
+    margin: 4px 0;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+</style>
+
+<script>
+    // 프로필 드롭다운 토글
+    function toggleProfileDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        dropdown.classList.toggle('show');
+    }
+
+    // 드롭다운 외부 클릭 시 닫기
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('profileDropdown');
+        const profileImage = document.querySelector('.profile-image');
+        
+        if (!dropdown.contains(e.target) && !profileImage.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+</script> 

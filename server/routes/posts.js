@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Post, User, Like, Comment } from '../models/index.js';
 import isAuthenticated from '../middleware/auth.js';
+import { createNotification } from '../utils/notifications.js';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -73,7 +74,8 @@ router.get('/', async (req, res) => {
     res.render('feed', { 
       user: req.user,
       posts: postsWithCounts,
-      currentUser: req.user
+      currentUser: req.user,
+      currentPage: 'feed'
     });
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -101,6 +103,7 @@ router.post('/:postId/like', async (req, res) => {
       // 좋아요 취소
       await existingLike.destroy();
       await post.decrement('likes');
+      await createNotification(post.authorId, req.user.id, 'like', post.id);
       return res.json({ 
         liked: false, 
         likes: post.likes - 1,
@@ -113,6 +116,7 @@ router.post('/:postId/like', async (req, res) => {
         PostId: req.params.postId
       });
       await post.increment('likes');
+      await createNotification(post.authorId, req.user.id, 'like', post.id);
       return res.json({ 
         liked: true, 
         likes: post.likes + 1,
