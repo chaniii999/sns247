@@ -86,17 +86,8 @@ const syncDatabase = async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     
-    // 외래 키 제약 조건 비활성화
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-    
-    // 테이블 삭제 순서: Comments -> Likes -> Posts -> Users
-    await Comment.sync({ force: true });
-    await Like.sync({ force: true });
-    await Post.sync({ force: true });
-    await User.sync({ force: true });
-    
-    // 외래 키 제약 조건 다시 활성화
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+    // force: false로 변경하여 기존 테이블 유지
+    await sequelize.sync({ force: false });
     
     console.log('Database synchronized successfully');
   } catch (error) {
