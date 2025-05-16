@@ -24,9 +24,17 @@ router.get('/', isAuthenticated, async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
+        // 알림 링크 수정
+        const formattedNotifications = notifications.map(notification => {
+            if (notification.type === 'like' || notification.type === 'comment') {
+                notification.link = `/comments/post/${notification.postId}`;
+            }
+            return notification;
+        });
+
         res.render('notifications', {
             currentUser: req.user,
-            notifications,
+            notifications: formattedNotifications,
             currentPage: 'notifications'
         });
     } catch (error) {

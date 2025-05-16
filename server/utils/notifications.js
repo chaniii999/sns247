@@ -14,14 +14,14 @@ export const createNotification = async (userId, senderId, type, postId = null) 
 
         switch (type) {
             case 'like':
-                link = `/comment/post/${postId}`;
+                link = `/comments/post/${postId}`;
                 const post = await Post.findByPk(postId);
                 if (post) {
                     preview = post.content.substring(0, 100);
                 }
                 break;
             case 'comment':
-                link = `/comment/post/${postId}`;
+                link = `/comments/post/${postId}`;
                 const commentedPost = await Post.findByPk(postId);
                 if (commentedPost) {
                     preview = commentedPost.content.substring(0, 100);
