@@ -400,30 +400,67 @@
         .repost-original {
             background-color: var(--background-color);
             border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
+            padding: 12px;
+            margin-top: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .repost-original:hover {
+            background-color: #e8e8e8;
         }
 
         .repost-original-header {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .repost-original-header .profile-image {
             width: 32px;
             height: 32px;
-            margin-right: 10px;
+            margin-right: 8px;
+        }
+
+        .repost-original-header strong {
+            font-size: 0.95em;
+        }
+
+        .repost-original-header .text-muted {
+            font-size: 0.8em;
         }
 
         .repost-original-content {
-            font-size: 15px;
-            line-height: 1.5;
-            margin-left: 42px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            margin-left: 40px;
+            color: var(--secondary-color);
         }
 
         .repost-original .post-image-container {
-            margin: 10px 0 0 42px;
+            margin: 8px 0 0 40px;
+            max-width: 90%;
+            border-radius: 8px;
+        }
+
+        .repost-original .post-image {
+            border-radius: 8px;
+        }
+
+        /* 리포스트 표시 아이콘 추가 */
+        .repost-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--secondary-color);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .repost-indicator i {
+            font-size: 1em;
         }
     </style>
 </head>
@@ -466,7 +503,38 @@
                 </div>
             </div>
             <div class="post-content">
+                <% if (post.originalPost) { %>
+                    <div class="repost-indicator">
+                        <i class="bi bi-repeat"></i>
+                        <span>리포스트</span>
+                    </div>
+                <% } %>
                 <%= post.content %>
+                <% if (post.originalPost) { %>
+                    <div class="repost-original" onclick="window.location.href='/comments/post/<%= post.originalPost.id %>'">
+                        <div class="repost-original-header">
+                            <img src="<%= post.originalPost.author.profileImage || '/images/default-profile.png' %>" 
+                                 alt="프로필" 
+                                 class="profile-image">
+                            <div>
+                                <strong><%= post.originalPost.author.name %></strong>
+                                <div class="text-muted">
+                                    <%= new Date(post.originalPost.createdAt).toLocaleString('ko-KR') %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="repost-original-content">
+                            <%= post.originalPost.content %>
+                        </div>
+                        <% if (post.originalPost.imageUrl) { %>
+                            <div class="post-image-container">
+                                <img src="<%= post.originalPost.imageUrl %>" 
+                                     alt="게시물 이미지" 
+                                     class="post-image">
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
             </div>
             <% if (post.imageUrl) { %>
                 <div class="post-image-container">

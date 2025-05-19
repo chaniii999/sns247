@@ -22,6 +22,17 @@ router.get('/post/:postId', async (req, res) => {
                     as: 'likedBy',
                     attributes: ['id'],
                     through: { attributes: [] }
+                },
+                {
+                    model: Post,
+                    as: 'originalPost',
+                    include: [
+                        {
+                            model: User,
+                            as: 'author',
+                            attributes: ['id', 'name', 'email', 'profileImage']
+                        }
+                    ]
                 }
             ]
         });
