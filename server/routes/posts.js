@@ -83,7 +83,7 @@ router.get('/', async (req, res) => {
     // 각 게시물에 댓글 수와 좋아요 상태 추가
     const postsWithCounts = posts.map(post => {
       const postJson = post.toJSON();
-      postJson.commentCount = post.Comments.length;
+      postJson.commentCount = post.comments.length;
       postJson.isLiked = post.likedBy.some(user => user.id === req.user.id);
       return postJson;
     });
