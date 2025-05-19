@@ -298,7 +298,7 @@
             }
         }
 
-        /* 프로필 드롭다운 메뉴 스타일 추가 */
+        /* 프로필 드롭다운 메뉴 스타일 수정 */
         .profile-dropdown {
             position: relative;
             display: inline-block;
@@ -315,6 +315,7 @@
             min-width: 150px;
             display: none;
             z-index: 1001;
+            margin-top: 8px;
         }
 
         .dropdown-menu.show {
@@ -328,6 +329,7 @@
             color: var(--secondary-color);
             text-decoration: none;
             transition: background-color 0.2s;
+            cursor: pointer;
         }
 
         .dropdown-item:hover {
@@ -748,6 +750,22 @@
 
     // 모달 외부 클릭 시 닫기
     document.getElementById('repostModalOverlay').addEventListener('click', hideRepostModal);
+
+    // 프로필 드롭다운 토글 함수
+    function toggleDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        dropdown.classList.toggle('show');
+    }
+
+    // 드롭다운 외부 클릭 시 닫기
+    window.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('profileDropdown');
+        const profileImage = document.querySelector('.header-profile-image');
+        
+        if (!profileImage.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
     </script>
 </body>
 </html>
