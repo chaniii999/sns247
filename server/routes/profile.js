@@ -1,7 +1,48 @@
 import express from 'express';
 import { Post, User } from '../models/index.js';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import isAuthenticated from '../middleware/auth.js';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 업로드 디렉토리 생성
+const uploadDir = path.join(__dirname, '../../public/uploads/profiles');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer 설정
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: function (req, file, cb) {
+        // 이미지 파일만 허용
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+            return cb(new Error('이미지 파일만 업로드 가능합니다.'), false);
+        }
+        cb(null, true);
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB 제한
+    }
+});
+
+// 모든 라우트에 인증 미들웨어 적용
+router.use(isAuthenticated);
 
 // 현재 로그인한 사용자의 프로필 페이지
 router.get('/', (req, res) => {
@@ -80,6 +121,37 @@ router.post('/update-name', async (req, res) => {
     } catch (error) {
         console.error('Error updating name:', error);
         res.status(500).json({ error: '이름 변경 중 오류가 발생했습니다.' });
+    }
+});
+
+// 프로필 사진 업데이트
+router.post('/update-profile-image', upload.single('profileImage'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: '이미지 파일이 필요합니다.' });
+        }
+
+        const profileImagePath = '/uploads/profiles/' + req.file.filename;
+        
+        await User.update(
+            { profileImage: profileImagePath },
+            { where: { id: req.user.id } }
+        );
+
+        res.json({ 
+            success: true, 
+            profileImage: profileImagePath,
+            message: '프로필 사진이 업데이트되었습니다.' 
+        });
+    } catch (error) {
+        console.error('Error updating profile image:', error);
+        // 업로드된 파일이 있다면 삭제
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting uploaded file:', err);
+            });
+        }
+        res.status(500).json({ error: '프로필 사진 업데이트 중 오류가 발생했습니다.' });
     }
 });
 
