@@ -1,7 +1,11 @@
 import express from 'express';
 import { Post, Comment, User } from '../models/index.js';
+import isAuthenticated from '../middleware/auth.js';
 
 const router = express.Router();
+
+// 모든 라우트에 인증 미들웨어 적용
+router.use(isAuthenticated);
 
 // 특정 게시물의 댓글 페이지 조회
 router.get('/post/:postId', async (req, res) => {
