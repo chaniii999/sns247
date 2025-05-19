@@ -92,13 +92,13 @@
 
         /* 게시물 이미지 컨테이너 스타일 수정 */
         .post-image-container {
-            width: 100%;
-            margin: 15px 0;
+            width: 66.67%;
+            margin: 15px auto;
             position: relative;
             overflow: hidden;
             background-color: #f8f9fa;
             border-radius: 15px;
-            aspect-ratio: 1;  /* 정사각형 비율 유지 */
+            aspect-ratio: 1;
         }
 
         .post-image {
@@ -108,7 +108,8 @@
             transform: translate(-50%, -50%);
             width: 100%;
             height: 100%;
-            object-fit: cover;  /* 이미지가 컨테이너를 꽉 채우도록 설정 */
+            object-fit: contain;
+            object-position: center;
         }
 
         .post-actions {
@@ -578,7 +579,7 @@
                         </div>
                     <% } %>
                 </div>
-                <% if (post.imageUrl) { %>
+                <% if (post.imageUrl && !post.originalPost) { %>
                     <div class="post-image-container">
                         <img src="<%= post.imageUrl %>" alt="게시물 이미지" class="post-image">
                     </div>
