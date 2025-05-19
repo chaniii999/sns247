@@ -456,7 +456,9 @@
                     <i class="bi bi-chat"></i>
                     <span><%= post.comments?.length || 0 %></span>
                 </div>
-                <div class="action-button">
+                <div class="action-button repost-button" 
+                     data-post-id="<%= post.id %>" 
+                     onclick="event.stopPropagation(); openRepostModal()">
                     <i class="bi bi-repeat"></i>
                     <span><%= post.reposts %></span>
                 </div>
@@ -682,9 +684,10 @@
             e.preventDefault();
             
             const content = this.querySelector('.repost-input').value;
+            const postId = '<%= post.id %>';
             
             try {
-                const response = await fetch('/posts/<%= post.id %>/repost', {
+                const response = await fetch(`/posts/${postId}/repost`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -695,17 +698,13 @@
                 if (response.ok) {
                     window.location.href = '/feed';
                 } else {
-                    alert('리포스트에 실패했습니다.');
+                    const data = await response.json();
+                    alert(data.error || '리포스트에 실패했습니다.');
                 }
             } catch (error) {
                 console.error('Error reposting:', error);
                 alert('리포스트 중 오류가 발생했습니다.');
             }
-        });
-
-        // 리포스트 버튼 클릭 이벤트
-        document.querySelector('.action-button:last-child').addEventListener('click', function() {
-            openRepostModal();
         });
 
         // 모달 외부 클릭 시 닫기

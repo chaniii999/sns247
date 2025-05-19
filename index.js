@@ -53,6 +53,7 @@ app.use(express.static('public'));
 // 라우트 설정
 app.use('/auth', authRoutes);
 app.use('/feed', postRoutes);
+app.use('/posts', postRoutes);
 app.use('/profile', profileRouter);
 app.use('/comments', commentRoutes);
 app.use('/search', searchRoutes);

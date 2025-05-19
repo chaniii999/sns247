@@ -507,7 +507,9 @@
                             <span><%= post.comments?.length || 0 %></span>
                         </a>
                     </div>
-                    <div class="action-button" onclick="event.stopPropagation();">
+                    <div class="action-button repost-button" 
+                         data-post-id="<%= post.id %>" 
+                         onclick="event.stopPropagation(); showRepostModal('<%= post.id %>')">
                         <i class="bi bi-repeat"></i>
                         <span><%= post.reposts %></span>
                     </div>
