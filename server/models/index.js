@@ -9,8 +9,15 @@ const Notification = NotificationFactory(sequelize);
 
 // User와 Post 관계 설정
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+User.hasMany(Post, { foreignKey: 'authorId' });
 
-// 좋아요 관계 설정
+// Like 관계 설정
+Post.belongsToMany(User, { 
+  through: Like,
+  as: 'likedBy',
+  foreignKey: 'PostId',
+  otherKey: 'UserId'
+});
 User.belongsToMany(Post, { 
   through: Like,
   as: 'likedPosts',
@@ -18,18 +25,15 @@ User.belongsToMany(Post, {
   otherKey: 'PostId'
 });
 
-Post.belongsToMany(User, { 
-  through: Like,
-  as: 'likedBy',
-  foreignKey: 'PostId',
-  otherKey: 'UserId'
-});
-
-// 댓글 관계 설정
+// Comment 관계 설정
 Comment.belongsTo(User, { as: 'commentAuthor', foreignKey: 'authorId' });
 Comment.belongsTo(Post, { foreignKey: 'postId' });
-Post.hasMany(Comment, { foreignKey: 'postId' });
 User.hasMany(Comment, { foreignKey: 'authorId' });
+Post.hasMany(Comment, { foreignKey: 'postId', as: 'comments' });
+
+// Repost 관계 설정
+Post.belongsTo(Post, { as: 'originalPost', foreignKey: 'originalPostId' });
+Post.hasMany(Post, { as: 'repostList', foreignKey: 'originalPostId' });
 
 // Notification 관계 설정
 Notification.associate?.({ User, Post });

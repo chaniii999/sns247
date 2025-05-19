@@ -9,6 +9,11 @@ import { Notification, Post, User } from '../models/index.js';
  */
 export const createNotification = async (userId, senderId, type, postId = null) => {
     try {
+        // 자신의 활동에 대한 알림은 생성하지 않음
+        if (userId === senderId) {
+            return;
+        }
+
         let link = '';
         let preview = '';
 

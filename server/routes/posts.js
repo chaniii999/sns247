@@ -58,16 +58,33 @@ router.get('/', async (req, res) => {
         },
         {
           model: Comment,
-          attributes: ['id']
+          as: 'comments',
+          include: [{
+            model: User,
+            as: 'commentAuthor',
+            attributes: ['id', 'name', 'email', 'profileImage']
+          }]
+        },
+        {
+          model: Post,
+          as: 'originalPost',
+          include: [
+            {
+              model: User,
+              as: 'author',
+              attributes: ['id', 'name', 'email', 'profileImage']
+            }
+          ]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
     
-    // 각 게시물에 댓글 수 추가
+    // 각 게시물에 댓글 수와 좋아요 상태 추가
     const postsWithCounts = posts.map(post => {
       const postJson = post.toJSON();
       postJson.commentCount = post.Comments.length;
+      postJson.isLiked = post.likedBy.some(user => user.id === req.user.id);
       return postJson;
     });
 
@@ -79,14 +96,24 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching posts:', error);
-    res.status(500).send('Error fetching posts');
+    res.status(500).send('게시물을 불러오는 중 오류가 발생했습니다.');
   }
 });
 
 // 좋아요 토글 라우트
 router.post('/:postId/like', async (req, res) => {
   try {
-    const post = await Post.findByPk(req.params.postId);
+    const post = await Post.findByPk(req.params.postId, {
+      include: [
+        {
+          model: User,
+          as: 'likedBy',
+          attributes: ['id'],
+          through: { attributes: [] }
+        }
+      ]
+    });
+
     if (!post) {
       return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
     }
@@ -102,11 +129,12 @@ router.post('/:postId/like', async (req, res) => {
     if (existingLike) {
       // 좋아요 취소
       await existingLike.destroy();
-      await post.decrement('likes');
-      await createNotification(post.authorId, req.user.id, 'like', post.id);
+      await post.update({
+        likes: Math.max(0, post.likes - 1)
+      });
       return res.json({ 
         liked: false, 
-        likes: post.likes - 1,
+        likes: post.likes,
         message: '좋아요가 취소되었습니다.' 
       });
     } else {
@@ -115,11 +143,13 @@ router.post('/:postId/like', async (req, res) => {
         UserId: req.user.id,
         PostId: req.params.postId
       });
-      await post.increment('likes');
+      await post.update({
+        likes: post.likes + 1
+      });
       await createNotification(post.authorId, req.user.id, 'like', post.id);
       return res.json({ 
         liked: true, 
-        likes: post.likes + 1,
+        likes: post.likes,
         message: '좋아요가 추가되었습니다.' 
       });
     }
@@ -176,6 +206,78 @@ router.delete('/:postId', async (req, res) => {
   } catch (error) {
     console.error('Error deleting post:', error);
     res.status(500).json({ error: '게시물 삭제 중 오류가 발생했습니다.' });
+  }
+});
+
+// 리포스트 라우트
+router.post('/:postId/repost', async (req, res) => {
+  try {
+    const originalPost = await Post.findByPk(req.params.postId, {
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name', 'email', 'profileImage']
+        }
+      ]
+    });
+
+    if (!originalPost) {
+      return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
+    }
+
+    // 리포스트 게시물 생성
+    const repost = await Post.create({
+      content: req.body.content || `리포스트: ${originalPost.content}`,
+      authorId: req.user.id,
+      originalPostId: originalPost.id,
+      imageUrl: originalPost.imageUrl
+    });
+
+    // 원본 게시물의 리포스트 수 증가
+    await originalPost.update({
+      reposts: originalPost.reposts + 1
+    });
+
+    // 알림 생성
+    if (originalPost.authorId !== req.user.id) {
+      await createNotification(
+        originalPost.authorId,
+        req.user.id,
+        'repost',
+        originalPost.id
+      );
+    }
+
+    // 리포스트된 게시물 정보 반환
+    const repostWithDetails = await Post.findByPk(repost.id, {
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name', 'email', 'profileImage']
+        },
+        {
+          model: Post,
+          as: 'originalPost',
+          include: [
+            {
+              model: User,
+              as: 'author',
+              attributes: ['id', 'name', 'email', 'profileImage']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json({ 
+      message: '리포스트가 완료되었습니다.',
+      repost: repostWithDetails
+    });
+  } catch (error) {
+    console.error('Error reposting:', error);
+    res.status(500).json({ error: '리포스트 처리 중 오류가 발생했습니다.' });
   }
 });
 

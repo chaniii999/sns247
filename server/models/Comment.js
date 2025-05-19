@@ -1,7 +1,5 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from './index.js';
-import User from './User.js';
-import Post from './Post.js';
 
 const Comment = sequelize.define('Comment', {
     id: {
@@ -29,12 +27,20 @@ const Comment = sequelize.define('Comment', {
             key: 'id'
         }
     }
+}, {
+    timestamps: true,
+    paranoid: true
 });
 
-// 관계 설정
-Comment.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
-Comment.belongsTo(Post, { foreignKey: 'postId' });
-Post.hasMany(Comment, { foreignKey: 'postId' });
-User.hasMany(Comment, { foreignKey: 'authorId' });
+Comment.associate = (models) => {
+    Comment.belongsTo(models.User, {
+        foreignKey: 'authorId',
+        as: 'author'
+    });
+    Comment.belongsTo(models.Post, {
+        foreignKey: 'postId',
+        as: 'post'
+    });
+};
 
 export default Comment;

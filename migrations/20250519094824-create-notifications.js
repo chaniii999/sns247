@@ -2,7 +2,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Notifications', {
       id: {
         type: Sequelize.INTEGER,
@@ -15,9 +15,7 @@ module.exports = {
         references: {
           model: 'Users',
           key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        }
       },
       senderId: {
         type: Sequelize.INTEGER,
@@ -25,9 +23,7 @@ module.exports = {
         references: {
           model: 'Users',
           key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        }
       },
       type: {
         type: Sequelize.ENUM('like', 'comment', 'follow'),
@@ -39,9 +35,7 @@ module.exports = {
         references: {
           model: 'Posts',
           key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        }
       },
       link: {
         type: Sequelize.STRING,
@@ -65,15 +59,13 @@ module.exports = {
       }
     });
 
-    // 인덱스 생성
+    // 인덱스 추가
     await queryInterface.addIndex('Notifications', ['userId']);
     await queryInterface.addIndex('Notifications', ['senderId']);
     await queryInterface.addIndex('Notifications', ['postId']);
-    await queryInterface.addIndex('Notifications', ['type']);
-    await queryInterface.addIndex('Notifications', ['read']);
   },
 
-  async down(queryInterface, Sequelize) {
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('Notifications');
   }
-}; 
+};

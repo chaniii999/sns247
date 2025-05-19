@@ -11,6 +11,10 @@ const Post = sequelize.define('Post', {
     type: DataTypes.TEXT,
     allowNull: false
   },
+  authorId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
   imageUrl: {
     type: DataTypes.STRING,
     allowNull: true
@@ -26,6 +30,14 @@ const Post = sequelize.define('Post', {
   reposts: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  originalPostId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Posts',
+      key: 'id'
+    }
   }
 }, {
   timestamps: true,
@@ -36,5 +48,36 @@ const Post = sequelize.define('Post', {
     }
   ]
 });
+
+Post.associate = (models) => {
+  Post.belongsTo(models.User, {
+    foreignKey: 'authorId',
+    as: 'author'
+  });
+  Post.belongsTo(models.Post, {
+    foreignKey: 'originalPostId',
+    as: 'originalPost'
+  });
+  Post.hasMany(models.Post, {
+    foreignKey: 'originalPostId',
+    as: 'repostList'
+  });
+  Post.belongsToMany(models.User, {
+    through: models.Like,
+    as: 'likedBy',
+    foreignKey: 'PostId',
+    otherKey: 'UserId'
+  });
+  Post.belongsToMany(models.User, {
+    through: 'Reposts',
+    as: 'repostedBy',
+    foreignKey: 'PostId',
+    otherKey: 'UserId'
+  });
+  Post.hasMany(models.Comment, {
+    foreignKey: 'postId',
+    as: 'comments'
+  });
+};
 
 export default Post;
