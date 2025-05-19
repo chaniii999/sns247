@@ -427,6 +427,67 @@
             border-radius: 5px;
             resize: vertical;
         }
+
+        /* 리포스트 원본 스타일 */
+        .repost-original {
+            background-color: var(--background-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        .repost-original-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .repost-original-header .profile-image {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+        }
+
+        .repost-original-header strong {
+            font-size: 0.95em;
+        }
+
+        .repost-original-header .text-muted {
+            font-size: 0.8em;
+        }
+
+        .repost-original-content {
+            font-size: 0.95em;
+            line-height: 1.4;
+            margin-left: 40px;
+            color: var(--secondary-color);
+        }
+
+        .repost-original .post-image-container {
+            margin: 8px 0 0 40px;
+            max-width: 90%;
+            border-radius: 8px;
+        }
+
+        .repost-original .post-image {
+            border-radius: 8px;
+        }
+
+        /* 리포스트 표시 아이콘 추가 */
+        .repost-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--secondary-color);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .repost-indicator i {
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
@@ -471,22 +532,49 @@
                     </div>
                 <% } %>
                 <div class="post-header">
-                    <a href="/profile/<%= post.author.id %>" class="text-decoration-none">
-                        <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
-                             alt="프로필" 
-                             class="profile-image">
-                    </a>
-                    <div class="post-header-info">
-                        <a href="/profile/<%= post.author.id %>" class="text-decoration-none text-dark">
-                            <h6 class="mb-0"><%= post.author.name %></h6>
-                        </a>
-                        <span class="post-time">
+                    <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
+                         alt="프로필" 
+                         class="profile-image">
+                    <div>
+                        <strong><%= post.author.name %></strong>
+                        <div class="text-muted" style="font-size: 14px;">
                             <%= new Date(post.createdAt).toLocaleString('ko-KR') %>
-                        </span>
+                        </div>
                     </div>
                 </div>
                 <div class="post-content">
+                    <% if (post.originalPost) { %>
+                        <div class="repost-indicator">
+                            <i class="bi bi-repeat"></i>
+                            <span>리포스트</span>
+                        </div>
+                    <% } %>
                     <%= post.content %>
+                    <% if (post.originalPost) { %>
+                        <div class="repost-original">
+                            <div class="repost-original-header">
+                                <img src="<%= post.originalPost.author.profileImage || '/images/default-profile.png' %>" 
+                                     alt="프로필" 
+                                     class="profile-image">
+                                <div>
+                                    <strong><%= post.originalPost.author.name %></strong>
+                                    <div class="text-muted">
+                                        <%= new Date(post.originalPost.createdAt).toLocaleString('ko-KR') %>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="repost-original-content">
+                                <%= post.originalPost.content %>
+                            </div>
+                            <% if (post.originalPost.imageUrl) { %>
+                                <div class="post-image-container">
+                                    <img src="<%= post.originalPost.imageUrl %>" 
+                                         alt="게시물 이미지" 
+                                         class="post-image">
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
                 </div>
                 <% if (post.imageUrl) { %>
                     <div class="post-image-container">

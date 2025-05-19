@@ -228,7 +228,7 @@ router.post('/:postId/repost', async (req, res) => {
 
     // 리포스트 게시물 생성
     const repost = await Post.create({
-      content: req.body.content || `리포스트: ${originalPost.content}`,
+      content: req.body.content,
       authorId: req.user.id,
       originalPostId: originalPost.id,
       imageUrl: originalPost.imageUrl

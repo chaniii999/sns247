@@ -395,6 +395,36 @@
         .cancel-button:hover {
             background-color: var(--background-color);
         }
+
+        /* 리포스트 원본 스타일 */
+        .repost-original {
+            background-color: var(--background-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .repost-original-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .repost-original-header .profile-image {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .repost-original-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-left: 42px;
+        }
+
+        .repost-original .post-image-container {
+            margin: 10px 0 0 42px;
+        }
     </style>
 </head>
 <body>
@@ -692,7 +722,18 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ content })
+                    body: JSON.stringify({ 
+                        content: content,
+                        originalPost: {
+                            author: {
+                                name: '<%= post.author.name %>',
+                                profileImage: '<%= post.author.profileImage || "/images/default-profile.png" %>'
+                            },
+                            content: '<%= post.content %>',
+                            createdAt: '<%= post.createdAt %>',
+                            imageUrl: '<%= post.imageUrl %>'
+                        }
+                    })
                 });
                 
                 if (response.ok) {
