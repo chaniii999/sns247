@@ -685,6 +685,32 @@
         document.getElementById('repostModal').style.display = 'none';
     }
 
+    // 게시물 삭제 함수
+    async function deletePost(postId) {
+        if (!confirm('정말로 이 게시물을 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/posts/${postId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.error || '게시물 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            alert('게시물 삭제 중 오류가 발생했습니다.');
+        }
+    }
+
     // 리포스트 폼 제출 이벤트
     document.getElementById('repostForm').addEventListener('submit', async function(e) {
         e.preventDefault();
