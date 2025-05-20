@@ -1,6 +1,7 @@
 import express from 'express';
 import { Post, Comment, User } from '../models/index.js';
 import isAuthenticated from '../middleware/auth.js';
+import { sequelize } from '../config/database.js';
 
 const router = express.Router();
 
@@ -84,24 +85,37 @@ router.post('/post/:postId', async (req, res) => {
             return res.status(400).json({ error: '댓글 내용을 입력해주세요.' });
         }
 
-        const comment = await Comment.create({
-            content: content.trim(),
-            authorId: req.user.id,
-            postId: req.params.postId
+        // 트랜잭션 시작
+        const result = await sequelize.transaction(async (t) => {
+            // 댓글 생성
+            const comment = await Comment.create({
+                content: content.trim(),
+                authorId: req.user.id,
+                postId: req.params.postId
+            }, { transaction: t });
+
+            // 게시물의 replies 카운트 증가
+            await Post.increment('replies', {
+                where: { id: req.params.postId },
+                transaction: t
+            });
+
+            // 작성자 정보를 포함하여 댓글 반환
+            const commentWithAuthor = await Comment.findByPk(comment.id, {
+                include: [
+                    {
+                        model: User,
+                        as: 'commentAuthor',
+                        attributes: ['id', 'name', 'email', 'profileImage']
+                    }
+                ],
+                transaction: t
+            });
+
+            return commentWithAuthor;
         });
 
-        // 작성자 정보를 포함하여 댓글 반환
-        const commentWithAuthor = await Comment.findByPk(comment.id, {
-            include: [
-                {
-                    model: User,
-                    as: 'commentAuthor',
-                    attributes: ['id', 'name', 'email', 'profileImage']
-                }
-            ]
-        });
-
-        res.json(commentWithAuthor);
+        res.json(result);
     } catch (error) {
         console.error('Error creating comment:', error);
         res.status(500).json({ error: '댓글 작성 중 오류가 발생했습니다.' });
@@ -165,12 +179,24 @@ router.delete('/:commentId', async (req, res) => {
             return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
         }
 
+        // 댓글 작성자 확인
         if (comment.authorId !== req.user.id) {
             return res.status(403).json({ error: '댓글을 삭제할 권한이 없습니다.' });
         }
 
-        await comment.destroy();
-        res.json({ success: true });
+        // 트랜잭션 시작
+        await sequelize.transaction(async (t) => {
+            // 댓글 삭제
+            await comment.destroy({ transaction: t });
+
+            // 게시물의 replies 카운트 감소
+            await Post.decrement('replies', {
+                where: { id: comment.postId },
+                transaction: t
+            });
+        });
+
+        res.json({ message: '댓글이 삭제되었습니다.' });
     } catch (error) {
         console.error('Error deleting comment:', error);
         res.status(500).json({ error: '댓글 삭제 중 오류가 발생했습니다.' });
