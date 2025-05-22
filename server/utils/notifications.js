@@ -35,6 +35,13 @@ export const createNotification = async (userId, senderId, type, postId = null) 
             case 'follow':
                 link = `/profile/${senderId}`;
                 break;
+            case 'repost':
+                link = `/comments/post/${postId}`;
+                const repostedPost = await Post.findByPk(postId);
+                if (repostedPost) {
+                    preview = repostedPost.content.substring(0, 100);
+                }
+                break;
         }
 
         await Notification.create({

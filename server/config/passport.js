@@ -22,7 +22,7 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // 기존 사용자 확인
+      // 기존 사용자 확인 (검색)
       let user = await User.findOne({
         where: {
           provider: 'google',
@@ -33,7 +33,7 @@ passport.use(new GoogleStrategy({
       if (!user) {
         // 새 사용자 생성
         user = await User.create({
-          email: profile.emails[0].value,
+          email: profile.emails[0].value, // @로 split
           name: profile.displayName,
           profileImage: profile.photos[0].value,
           provider: 'google',
