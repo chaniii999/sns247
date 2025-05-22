@@ -1,4 +1,6 @@
 // index.js
+// 해당 앱의 main함수의 역할을 한다.
+// 도메인 경로 설정, port 설정, DB 연동 함수가 구현되어있음.
 import express from 'express';
 import session from 'express-session';
 import dotenv from 'dotenv';
@@ -8,12 +10,8 @@ import { sequelize } from './server/models/index.js';
 import passport from './server/config/passport.js';
 import authRoutes from './server/routes/auth.js';
 import postRoutes from './server/routes/posts.js';
-import User from './server/models/User.js';
-import Post from './server/models/Post.js';
-import Like from './server/models/Like.js';
 import profileRouter from './server/routes/profile.js';
 import commentRoutes from './server/routes/comments.js';
-import Comment from './server/models/Comment.js';
 import searchRoutes from './server/routes/search.js';
 import notificationRoutes from './server/routes/notifications.js';
 
@@ -77,26 +75,18 @@ app.get('/login', (req, res) => {
   }
 });
 
-// 대시보드 라우트를 피드로 변경
-app.get('/dashboard', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  res.redirect('/feed');
-});
-
 // 데이터베이스 연결 및 테이블 동기화
 const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
+    console.log('DB 연결 성공!');
     
     // force: false로 변경하여 기존 테이블 유지
     await sequelize.sync({ force: false });
     
-    console.log('Database synchronized successfully');
+    console.log('DB 동기화 성공!');
   } catch (error) {
-    console.error('Error synchronizing database:', error);
+    console.error('ERROR DB 연결 및 동기화 실패! 내용:', error);
   }
 };
 
@@ -105,5 +95,8 @@ syncDatabase();
 // 서버 시작
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`서버 시작!\n포트번호: ${PORT}`);
 });
+
+
+
