@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+
+
+// 데이터베이스 연결 config
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'sns247',
   process.env.DB_USER || 'root',
@@ -31,21 +34,6 @@ const sequelize = new Sequelize(
   }
 );
 
-
-// 개발 환경에서만 사용
-const syncDatabase = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
-    
-    // force: false로 변경하여 기존 테이블 유지
-    await sequelize.sync({ force: false });
-    
-    console.log('Database synchronized successfully');
-  } catch (error) {
-    console.error('Error synchronizing database:', error);
-  }
-};
 
 export { sequelize };
 export default sequelize;
