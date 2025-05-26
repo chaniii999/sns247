@@ -109,15 +109,26 @@
             display: flex;
             align-items: center;
             margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .post-header img.profile-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .post-header-info {
             display: flex;
             flex-direction: column;
+            gap: 2px;
         }
 
         .post-header-info h6 {
-            margin-bottom: 2px;
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
         }
 
         .post-time {
@@ -133,13 +144,13 @@
         }
 
         .post-image-container {
-            width: 66.67%;
-            margin: 15px auto;
+            width: 100%;
+            margin: 15px 0;
             position: relative;
             overflow: hidden;
             background-color: #f8f9fa;
             border-radius: 15px;
-            aspect-ratio: 1;
+            aspect-ratio: 16/9;
         }
 
         .post-image {
@@ -149,7 +160,7 @@
             transform: translate(-50%, -50%);
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
         }
 
