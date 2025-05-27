@@ -1,4 +1,4 @@
-import { Notification, Post, User } from '../models/index.js';
+import { Notification, Post, User, Comment } from '../models/index.js';
 
 /**
  * 알림 생성 헬퍼 함수
@@ -29,7 +29,18 @@ export const createNotification = async (userId, senderId, type, postId = null) 
                 link = `/comments/post/${postId}`;
                 const commentedPost = await Post.findByPk(postId);
                 if (commentedPost) {
-                    preview = commentedPost.content.substring(0, 100);
+                    // 게시글 내용과 댓글 내용을 모두 저장
+                    const comment = await Comment.findOne({
+                        where: { postId: postId },
+                        order: [['createdAt', 'DESC']],
+                        limit: 1
+                    });
+                    if (comment) {
+                        preview = JSON.stringify({
+                            postContent: commentedPost.content.substring(0, 100),
+                            commentContent: comment.content.substring(0, 100)
+                        });
+                    }
                 }
                 break;
             case 'follow':

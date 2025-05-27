@@ -110,12 +110,47 @@
 
         .notification-preview {
             margin-top: 8px;
-            padding: 8px;
-            background-color: white;
-            border: 1px solid var(--border-color);
+            padding: 12px;
+            background-color: #f8f9fa;
             border-radius: 8px;
             font-size: 14px;
             color: var(--secondary-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .preview-post, .preview-comment {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .preview-post {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            font-size: 13px;
+            color: #657786;
+        }
+
+        .preview-comment {
+            font-size: 15px;
+            color: #14171a;
+            background-color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .notification-preview i {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-top: 2px;
+        }
+
+        .preview-post i {
+            color: #657786;
         }
 
         /* 알림 없음 */
@@ -178,6 +213,31 @@
                                 님이 회원님의 게시물을 좋아합니다.
                             <% } else if (notification.type === 'comment') { %>
                                 님이 회원님의 게시물에 댓글을 남겼습니다.
+                                <% if (notification.preview) { 
+                                    let postContent = '';
+                                    let commentContent = '';
+                                    try {
+                                        const preview = JSON.parse(notification.preview);
+                                        postContent = preview.postContent;
+                                        commentContent = preview.commentContent;
+                                    } catch (e) {
+                                        // 이전 형식의 데이터 처리
+                                        commentContent = notification.preview;
+                                    }
+                                %>
+                                    <div class="notification-preview">
+                                        <% if (postContent) { %>
+                                            <div class="preview-post">
+                                                <i class="bi bi-file-text"></i>
+                                                <%= postContent %>
+                                            </div>
+                                        <% } %>
+                                        <div class="preview-comment">
+                                            <i class="bi bi-chat-left-text"></i>
+                                            <strong><%= commentContent %></strong>
+                                        </div>
+                                    </div>
+                                <% } %>
                             <% } else if (notification.type === 'follow') { %>
                                 님이 회원님을 팔로우하기 시작했습니다.
                             <% } else if (notification.type === 'repost') { %>
@@ -187,11 +247,6 @@
                         <div class="notification-time">
                             <%= new Date(notification.createdAt).toLocaleString('ko-KR') %>
                         </div>
-                        <% if (notification.preview) { %>
-                            <div class="notification-preview">
-                                <%= notification.preview %>
-                            </div>
-                        <% } %>
                     </div>
                 </a>
             <% }); %>
