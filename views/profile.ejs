@@ -426,267 +426,140 @@
     </style>
 </head>
 <body>
-    <!-- 헤더 -->
-    <div class="header">
-        <div class="header-content">
-            <a href="/feed" class="text-decoration-none text-dark">
-                <i class="bi bi-arrow-left"></i>
-            </a>
-            <div>
-                <h5 class="mb-0"><%= profileUser.name %></h5>
-                <small class="text-muted"><%= posts.length %> 게시물</small>
-            </div>
-            <div class="ms-auto position-relative">
-                <img src="<%= currentUser.profileImage || '/images/default-profile.png' %>" 
-                     alt="프로필" 
-                     class="profile-image"
-                     style="width: 32px; height: 32px; cursor: pointer;"
-                     onclick="toggleProfileDropdown()">
-                <%- include('partials/profile-dropdown') %>
-            </div>
-        </div>
-    </div>
+    <%- include('partials/header') %>
 
-    <!-- 메인 컨텐츠 -->
-    <div class="main-content">
-        <!-- 프로필 헤더 -->
-        <div class="profile-header">
-            <div class="profile-info">
-                <div class="profile-image-container">
-                    <img src="<%= profileUser.profileImage || '/images/default-profile.png' %>" 
-                         alt="프로필" 
-                         class="profile-image">
-                    <% if (currentUser && currentUser.id === profileUser.id) { %>
-                        <label class="profile-image-edit">
-                            <i class="bi bi-camera"></i>
-                            <input type="file" 
-                                   id="profileImageInput" 
-                                   accept="image/*" 
-                                   onchange="updateProfileImage(this)">
-                        </label>
-                    <% } %>
-                </div>
-                <div class="d-flex align-items-center">
-                    <h4 class="profile-name mb-0"><%= profileUser.name %></h4>
-                    <% if (currentUser && currentUser.id === profileUser.id) { %>
-                        <button class="edit-name-button" onclick="openProfileEditModal()">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                    <% } %>
-                </div>
-                <p class="profile-username">@<%= profileUser.email.split('@')[0] %></p>
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <span class="stat-value"><%= posts.length %></span>
-                        <span class="stat-label">게시물</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value"><%= posts.reduce((sum, post) => sum + (post.likedBy?.length || 0), 0) %></span>
-                        <span class="stat-label">좋아요</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 게시물 목록 -->
-        <% if (posts.length === 0) { %>
-            <div class="text-center text-muted mt-4">
-                아직 작성한 게시물이 없습니다.
-            </div>
-        <% } else { %>
-            <% posts.forEach(post => { %>
-                <div class="post" onclick="window.location.href='/comments/post/<%= post.id %>'" style="cursor: pointer;">
-                    <div class="post-header">
-                        <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <!-- 프로필 정보 -->
+                <div class="profile-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <img src="<%= profileUser.profileImage || '/images/default-profile.png' %>" 
                              alt="프로필" 
-                             class="profile-image"
-                             style="width: 48px; height: 48px;">
-                        <div class="post-header-info">
-                            <h6 class="mb-0"><%= post.author.name %></h6>
-                            <span class="post-time">
-                                <%= new Date(post.createdAt).toLocaleString('ko-KR') %>
-                            </span>
+                             class="profile-image me-3"
+                             style="width: 100px; height: 100px;">
+                        <div>
+                            <h3><%= profileUser.name %></h3>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-calendar"></i> 
+                                <%= new Date(profileUser.createdAt).toLocaleDateString('ko-KR') %> 가입
+                            </p>
+                            <% if (currentUser && currentUser.id === profileUser.id) { %>
+                                <button class="btn btn-outline-primary" onclick="openProfileEditModal()">
+                                    프로필 수정
+                                </button>
+                            <% } %>
                         </div>
                     </div>
-                    <div class="post-content">
-                        <%= post.content %>
-                    </div>
-                    <% if (post.imageUrl) { %>
-                        <div class="post-image-container">
-                            <img src="<%= post.imageUrl %>" 
-                                 alt="게시물 이미지" 
-                                 class="post-image">
-                        </div>
+                </div>
+
+                <!-- 게시물 목록 -->
+                <div class="posts-list">
+                    <% if (posts && posts.length > 0) { %>
+                        <% posts.forEach(post => { %>
+                            <%- include('partials/post', { post: post, currentUser: currentUser }) %>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="text-muted text-center">아직 게시물이 없습니다.</p>
                     <% } %>
-                    <div class="post-actions">
-                        <div class="action-button like-button <%= post.likedBy.some(user => user.id === currentUser.id) ? 'liked' : '' %>" 
-                             data-post-id="<%= post.id %>" 
-                             data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>"
-                             onclick="event.stopPropagation();">
-                            <i class="bi bi-heart<%= post.likedBy.some(user => user.id === currentUser.id) ? '-fill' : '' %>"></i>
-                            <span class="likes-count"><%= post.likedBy?.length || 0 %></span>
-                        </div>
-                        <div class="action-button" onclick="event.stopPropagation();">
-                            <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
-                                <i class="bi bi-chat"></i>
-                                <span><%= post.comments?.length || 0 %></span>
-                            </a>
-                        </div>
-                        <div class="action-button" onclick="event.stopPropagation();">
-                            <i class="bi bi-repeat"></i>
-                            <span>0</span>
-                        </div>
-                    </div>
-                </div>
-            <% }); %>
-        <% } %>
-    </div>
-
-    <%- include('partials/navigation') %>
-
-    <!-- 새 게시물 작성 버튼 -->
-    <div class="new-post" onclick="showPostModal()">
-        <i class="bi bi-plus-lg"></i>
-    </div>
-
-    <!-- 게시물 작성 모달 -->
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="post-modal" id="postModal">
-        <form action="/feed" method="POST" enctype="multipart/form-data">
-            <div class="post-header">
-                <img src="<%= currentUser.profileImage %>" alt="프로필" class="profile-image" style="width: 48px; height: 48px;">
-                <div>
-                    <h6 class="mb-0"><%= currentUser.name %></h6>
-                    <small class="text-muted">@<%= currentUser.email.split('@')[0] %></small>
                 </div>
             </div>
-            <textarea name="content" placeholder="무슨 일이 일어나고 있나요?" required></textarea>
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <label class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-image"></i> 이미지 추가
-                        <input type="file" name="image" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                    </label>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-secondary me-2" onclick="hidePostModal()">취소</button>
-                    <button type="submit" class="btn btn-primary">게시</button>
-                </div>
-            </div>
-            <img id="imagePreview" class="image-preview" src="" alt="미리보기">
-        </form>
+        </div>
     </div>
 
     <!-- 프로필 수정 모달 -->
-    <div class="profile-edit-modal" id="profileEditModal">
-        <div class="profile-edit-content">
-            <div class="profile-edit-header">
-                <h5>프로필 수정</h5>
-                <button class="close-modal" onclick="closeProfileEditModal()">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+    <div class="modal fade" id="profileEditModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">프로필 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileEditForm">
+                        <div class="mb-3">
+                            <label for="newName" class="form-label">닉네임</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="newName" 
+                                   name="newName" 
+                                   value="<%= profileUser.name %>"
+                                   required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateProfile()">저장</button>
+                </div>
             </div>
-            <form class="profile-edit-form" id="profileEditForm">
-                <input type="text" 
-                       id="newName" 
-                       name="newName" 
-                       placeholder="새로운 닉네임" 
-                       value="<%= profileUser.name %>"
-                       required>
-                <button type="submit">저장</button>
-            </form>
         </div>
     </div>
 
+    <!-- 리포스트 모달 -->
+    <div class="modal fade" id="repostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">리포스트</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="repostForm">
+                        <input type="hidden" id="repostPostId" name="postId">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="repostContent" name="content" rows="3" placeholder="리포스트 내용을 입력하세요..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="postManager.submitRepost()">리포스트</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게시글 수정 모달 -->
+    <div class="modal fade" id="editPostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">게시글 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPostForm">
+                        <input type="hidden" id="editPostId">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="editPostContent" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="postManager.updatePost()">수정</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <!-- 공통 스크립트 -->
+    <script src="/js/post.js"></script>
     <script>
-        // 좋아요 기능
-        document.querySelectorAll('.like-button').forEach(button => {
-            button.addEventListener('click', async function() {
-                const postId = this.dataset.postId;
-                const isLiked = this.dataset.liked === 'true';
-                
-                try {
-                    const response = await fetch(`/feed/${postId}/like`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        const icon = this.querySelector('i');
-                        const countSpan = this.querySelector('.likes-count');
-                        
-                        if (data.liked) {
-                            icon.classList.remove('bi-heart');
-                            icon.classList.add('bi-heart-fill');
-                            this.classList.add('liked');
-                        } else {
-                            icon.classList.remove('bi-heart-fill');
-                            icon.classList.add('bi-heart');
-                            this.classList.remove('liked');
-                        }
-                        
-                        countSpan.textContent = data.likes;
-                        this.dataset.liked = data.liked;
-                    }
-                } catch (error) {
-                    console.error('Error toggling like:', error);
-                }
-            });
-        });
+        // PostManager 인스턴스 생성
+        const postManager = new PostManager();
 
-        // 프로필 사진 업데이트 함수
-        async function updateProfileImage(input) {
-            if (!input.files || !input.files[0]) {
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('profileImage', input.files[0]);
-
-            try {
-                const response = await fetch('/profile/update-profile-image', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    // 모든 프로필 이미지 업데이트
-                    document.querySelectorAll('img.profile-image').forEach(img => {
-                        img.src = data.profileImage;
-                    });
-                    // 헤더의 프로필 이미지도 업데이트
-                    const headerProfileImage = document.querySelector('.header img.profile-image');
-                    if (headerProfileImage) {
-                        headerProfileImage.src = data.profileImage;
-                    }
-                } else {
-                    const error = await response.json();
-                    alert(error.error || '프로필 사진 업데이트에 실패했습니다.');
-                }
-            } catch (error) {
-                console.error('Error updating profile image:', error);
-                alert('프로필 사진 업데이트 중 오류가 발생했습니다.');
-            }
-        }
-
-        // 프로필 수정 모달 관련 함수
+        // 프로필 수정 모달 열기
         function openProfileEditModal() {
-            document.getElementById('profileEditModal').classList.add('active');
+            const modal = new bootstrap.Modal(document.getElementById('profileEditModal'));
+            modal.show();
         }
 
-        function closeProfileEditModal() {
-            document.getElementById('profileEditModal').classList.remove('active');
-        }
-
-        // 프로필 수정 폼 제출 처리
-        document.getElementById('profileEditForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
+        // 프로필 수정
+        async function updateProfile() {
             const newName = document.getElementById('newName').value;
             
             try {
@@ -701,51 +574,13 @@
                 if (response.ok) {
                     window.location.reload();
                 } else {
-                    const data = await response.json();
-                    alert(data.error || '닉네임 변경에 실패했습니다.');
+                    alert('닉네임 변경에 실패했습니다.');
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
                 alert('닉네임 변경 중 오류가 발생했습니다.');
             }
-        });
-
-        // 모달 외부 클릭 시 닫기
-        document.getElementById('profileEditModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeProfileEditModal();
-            }
-        });
-
-        // 게시물 작성 모달 관련 함수들
-        function showPostModal() {
-            document.getElementById('modalOverlay').style.display = 'block';
-            document.getElementById('postModal').style.display = 'block';
         }
-
-        function hidePostModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
-            document.getElementById('postModal').style.display = 'none';
-            // 폼 초기화
-            document.querySelector('#postModal form').reset();
-            document.getElementById('imagePreview').style.display = 'none';
-        }
-
-        // 이미지 미리보기 함수
-        function previewImage(input) {
-            const preview = document.getElementById('imagePreview');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        // 모달 외부 클릭 시 닫기
-        document.getElementById('modalOverlay').addEventListener('click', hidePostModal);
     </script>
 </body>
 </html>

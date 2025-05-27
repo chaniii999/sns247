@@ -1,0 +1,149 @@
+/* 게시물 공통 스타일 */
+.post {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    background-color: white;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.post-header img.profile-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.post-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.post-header-info h6 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.post-time {
+    font-size: 12px;
+    color: var(--secondary-color);
+}
+
+.post-content {
+    margin: 10px 0;
+    font-size: 15px;
+    line-height: 1.5;
+    width: 100%;
+}
+
+.post-image-container {
+    width: 66.67%;
+    margin: 15px auto;
+    position: relative;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    aspect-ratio: 1;
+}
+
+.post-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.post-actions {
+    display: flex;
+    gap: 20px;
+    color: var(--secondary-color);
+    margin-top: 10px;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.action-button:hover {
+    color: var(--primary-color);
+}
+
+.action-button.liked {
+    color: #e0245e;
+}
+
+.action-button.liked i {
+    fill: currentColor;
+}
+
+/* 리포스트 관련 스타일 */
+.repost-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--secondary-color);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.repost-original {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.repost-original-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.repost-original-content {
+    font-size: 14px;
+    color: var(--secondary-color);
+}
+
+/* 게시물 수정/삭제 버튼 */
+.post-actions-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.post-action-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--secondary-color);
+    transition: color 0.2s;
+}
+
+.post-action-btn:hover {
+    color: var(--primary-color);
+}
+
+.post-action-btn.delete:hover {
+    color: #dc3545;
+} 

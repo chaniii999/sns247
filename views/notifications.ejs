@@ -341,6 +341,12 @@
             reconnectionAttempts: 5
         });
 
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            // 초기 알림 카운트 업데이트
+            updateNotificationCount();
+        });
+
         // 연결 성공 시
         socket.on('connect', () => {
             console.log('Socket.IO connected');
@@ -348,15 +354,24 @@
             socket.emit('authenticate', '<%= currentUser.id %>');
         });
 
-        // 연결 실패 시
-        socket.on('connect_error', (error) => {
-            console.error('Socket.IO connection error:', error);
-        });
-
-        // 재연결 시도 시
-        socket.on('reconnecting', (attemptNumber) => {
-            console.log('Socket.IO reconnecting...', attemptNumber);
-        });
+        // 알림 카운트 업데이트 함수
+        async function updateNotificationCount() {
+            try {
+                console.log('Updating notification count...');
+                const response = await fetch('/notifications/count');
+                const data = await response.json();
+                console.log('Notification count:', data.count);
+                
+                // 모든 페이지의 알림 배지 업데이트
+                const badges = document.querySelectorAll('.notification-badge');
+                badges.forEach(badge => {
+                    badge.textContent = data.count;
+                    badge.style.display = data.count > 0 ? 'flex' : 'none';
+                });
+            } catch (error) {
+                console.error('Error updating notification count:', error);
+            }
+        }
 
         // 새로운 알림 수신
         socket.on('newNotification', (notification) => {
@@ -376,8 +391,26 @@
             // 알림 소리 재생
             playNotificationSound();
 
-            // 알림 배지 업데이트
-            updateNotificationBadge();
+            // 알림 카운트 업데이트
+            updateNotificationCount();
+        });
+
+        // 알림 클릭 이벤트 처리
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async function(e) {
+                const notificationId = this.dataset.notificationId;
+                try {
+                    const response = await fetch(`/notifications/${notificationId}/read`, {
+                        method: 'POST'
+                    });
+                    if (response.ok) {
+                        this.classList.remove('unread');
+                        updateNotificationCount();
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            });
         });
 
         // 알림 요소 생성 함수
@@ -442,7 +475,7 @@
                     });
                     if (response.ok) {
                         this.classList.remove('unread');
-                        updateNotificationBadge();
+                        updateNotificationCount();
                     }
                 } catch (error) {
                     console.error('Error marking notification as read:', error);
@@ -450,16 +483,6 @@
             });
 
             return element;
-        }
-
-        // 알림 배지 업데이트 함수
-        function updateNotificationBadge() {
-            const unreadCount = document.querySelectorAll('.notification-item.unread').length;
-            const badge = document.querySelector('.notification-badge');
-            if (badge) {
-                badge.textContent = unreadCount;
-                badge.style.display = unreadCount > 0 ? 'block' : 'none';
-            }
         }
 
         // 알림 타입별 아이콘 반환
@@ -501,9 +524,6 @@
                 console.log('알림 소리를 재생할 수 없습니다:', error);
             });
         }
-
-        // 초기 알림 배지 업데이트
-        updateNotificationBadge();
     </script>
 </body>
 </html> 

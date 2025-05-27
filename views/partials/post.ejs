@@ -1,0 +1,90 @@
+<!-- 게시물 템플릿 -->
+<div class="post" data-post-id="<%= post.id %>" onclick="window.location.href='/comments/post/<%= post.id %>'" style="cursor: pointer;">
+    <% if (currentUser && post.authorId === currentUser.id) { %>
+        <div class="post-actions-menu">
+            <button class="post-action-btn edit" onclick="event.stopPropagation(); postManager.openEditModal('<%= post.id %>', '<%= post.content %>')">
+                <i class="bi bi-pencil"></i>
+            </button>
+            <button class="post-action-btn delete" onclick="event.stopPropagation(); postManager.deletePost('<%= post.id %>')">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    <% } %>
+    <div class="post-header">
+        <a href="/profile/<%= post.author.id %>" class="text-decoration-none">
+            <img src="<%= post.author.profileImage || '/images/default-profile.png' %>" 
+                 alt="프로필" 
+                 class="profile-image">
+        </a>
+        <div class="post-header-info">
+            <a href="/profile/<%= post.author.id %>" class="text-decoration-none text-dark">
+                <strong><%= post.author.name %></strong>
+            </a>
+            <div class="text-muted" style="font-size: 14px;">
+                <%= new Date(post.createdAt).toLocaleString('ko-KR') %>
+            </div>
+        </div>
+    </div>
+    <div class="post-content">
+        <% if (post.originalPost) { %>
+            <div class="repost-indicator">
+                <i class="bi bi-repeat"></i>
+                <span>리포스트</span>
+            </div>
+        <% } %>
+        <%= post.content %>
+        <% if (post.originalPost) { %>
+            <div class="repost-original">
+                <div class="repost-original-header">
+                    <img src="<%= post.originalPost.author.profileImage || '/images/default-profile.png' %>" 
+                         alt="프로필" 
+                         class="profile-image">
+                    <div>
+                        <strong><%= post.originalPost.author.name %></strong>
+                        <div class="text-muted">
+                            <%= new Date(post.originalPost.createdAt).toLocaleString('ko-KR') %>
+                        </div>
+                    </div>
+                </div>
+                <div class="repost-original-content">
+                    <%= post.originalPost.content %>
+                </div>
+                <% if (post.originalPost.imageUrl) { %>
+                    <div class="post-image-container">
+                        <img src="<%= post.originalPost.imageUrl %>" 
+                             alt="게시물 이미지" 
+                             class="post-image">
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+    <% if (post.imageUrl) { %>
+        <div class="post-image-container">
+            <img src="<%= post.imageUrl %>" 
+                 alt="게시물 이미지" 
+                 class="post-image">
+        </div>
+    <% } %>
+    <div class="post-actions">
+        <div class="action-button like-button <%= post.likedBy.some(user => user.id === currentUser.id) ? 'liked' : '' %>" 
+             data-post-id="<%= post.id %>" 
+             data-liked="<%= post.likedBy.some(user => user.id === currentUser.id) %>"
+             onclick="event.stopPropagation(); postManager.toggleLike(this)">
+            <i class="bi bi-heart<%= post.likedBy.some(user => user.id === currentUser.id) ? '-fill' : '' %>"></i>
+            <span class="likes-count"><%= post.likes %></span>
+        </div>
+        <div class="action-button" onclick="event.stopPropagation();">
+            <a href="/comments/post/<%= post.id %>" class="text-decoration-none text-secondary">
+                <i class="bi bi-chat"></i>
+                <span><%= post.comments?.length || 0 %></span>
+            </a>
+        </div>
+        <div class="action-button repost-button" 
+             data-post-id="<%= post.id %>" 
+             onclick="event.stopPropagation(); postManager.showRepostModal('<%= post.id %>')">
+            <i class="bi bi-repeat"></i>
+            <span><%= post.reposts %></span>
+        </div>
+    </div>
+</div> 
