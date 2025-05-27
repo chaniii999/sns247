@@ -2,6 +2,7 @@ import express from 'express';
 import { Post, Comment, User } from '../models/index.js';
 import isAuthenticated from '../middleware/auth.js';
 import { sequelize } from '../config/database.js';
+import { createNotification } from '../utils/notifications.js';
 
 const router = express.Router();
 
@@ -74,10 +75,6 @@ router.get('/post/:postId', async (req, res) => {
 
 // 댓글 작성
 router.post('/post/:postId', async (req, res) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: '로그인이 필요합니다.' });
-    }
-
     try {
         const { content } = req.body;
         
@@ -85,37 +82,51 @@ router.post('/post/:postId', async (req, res) => {
             return res.status(400).json({ error: '댓글 내용을 입력해주세요.' });
         }
 
-        // 트랜잭션 시작
-        const result = await sequelize.transaction(async (t) => {
-            // 댓글 생성
-            const comment = await Comment.create({
-                content: content.trim(),
-                authorId: req.user.id,
-                postId: req.params.postId
-            }, { transaction: t });
-
-            // 게시물의 replies 카운트 증가
-            await Post.increment('replies', {
-                where: { id: req.params.postId },
-                transaction: t
-            });
-
-            // 작성자 정보를 포함하여 댓글 반환
-            const commentWithAuthor = await Comment.findByPk(comment.id, {
-                include: [
-                    {
-                        model: User,
-                        as: 'commentAuthor',
-                        attributes: ['id', 'name', 'email', 'profileImage']
-                    }
-                ],
-                transaction: t
-            });
-
-            return commentWithAuthor;
+        // 1. 댓글 생성
+        const comment = await Comment.create({
+            content: content.trim(),
+            authorId: req.user.id,
+            postId: req.params.postId
         });
 
-        res.json(result);
+        // 2. 게시물 정보 조회
+        const post = await Post.findByPk(req.params.postId);
+
+        if (!post) {
+            throw new Error('게시물을 찾을 수 없습니다.');
+        }
+
+        // 3. replies 카운트 증가 (별도 트랜잭션)
+        await sequelize.transaction(async (t) => {
+            await post.increment('replies', { transaction: t });
+        });
+
+        // 4. 알림 생성 (별도 처리)
+        if (post.authorId !== req.user.id) {
+            try {
+                await createNotification(
+                    post.authorId,
+                    req.user.id,
+                    'comment',
+                    post.id
+                );
+            } catch (notificationError) {
+                console.error('Error creating notification:', notificationError);
+            }
+        }
+
+        // 5. 작성자 정보를 포함하여 댓글 반환
+        const commentWithAuthor = await Comment.findByPk(comment.id, {
+            include: [
+                {
+                    model: User,
+                    as: 'commentAuthor',
+                    attributes: ['id', 'name', 'email', 'profileImage']
+                }
+            ]
+        });
+
+        res.json(commentWithAuthor);
     } catch (error) {
         console.error('Error creating comment:', error);
         res.status(500).json({ error: '댓글 작성 중 오류가 발생했습니다.' });
@@ -124,10 +135,6 @@ router.post('/post/:postId', async (req, res) => {
 
 // 댓글 수정
 router.put('/:commentId', async (req, res) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: '로그인이 필요합니다.' });
-    }
-
     try {
         const comment = await Comment.findByPk(req.params.commentId);
         
@@ -168,10 +175,6 @@ router.put('/:commentId', async (req, res) => {
 
 // 댓글 삭제
 router.delete('/:commentId', async (req, res) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: '로그인이 필요합니다.' });
-    }
-
     try {
         const comment = await Comment.findByPk(req.params.commentId);
         

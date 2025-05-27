@@ -90,6 +90,10 @@
             background-color: #17bf63;
         }
 
+        .notification-icon.repost {
+            background-color: #794bc4;
+        }
+
         .notification-content {
             flex: 1;
         }
@@ -163,6 +167,8 @@
                             <i class="bi bi-chat-fill"></i>
                         <% } else if (notification.type === 'follow') { %>
                             <i class="bi bi-person-plus-fill"></i>
+                        <% } else if (notification.type === 'repost') { %>
+                            <i class="bi bi-repeat"></i>
                         <% } %>
                     </div>
                     <div class="notification-content">
@@ -174,6 +180,8 @@
                                 님이 회원님의 게시물에 댓글을 남겼습니다.
                             <% } else if (notification.type === 'follow') { %>
                                 님이 회원님을 팔로우하기 시작했습니다.
+                            <% } else if (notification.type === 'repost') { %>
+                                님이 회원님의 게시물을 리포스트했습니다.
                             <% } %>
                         </div>
                         <div class="notification-time">

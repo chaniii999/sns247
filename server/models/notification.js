@@ -16,7 +16,7 @@ export default (sequelize) => {
             allowNull: false
         },
         type: {
-            type: DataTypes.ENUM('like', 'comment', 'follow'),
+            type: DataTypes.ENUM('like', 'comment', 'follow', 'repost'),
             allowNull: false
         },
         postId: {

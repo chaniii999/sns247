@@ -26,7 +26,7 @@ module.exports = {
         }
       },
       type: {
-        type: Sequelize.ENUM('like', 'comment', 'follow'),
+        type: Sequelize.ENUM('like', 'comment', 'follow', 'repost'),
         allowNull: false
       },
       postId: {
