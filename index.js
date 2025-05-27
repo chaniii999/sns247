@@ -88,7 +88,7 @@ const syncDatabase = async () => {
     await sequelize.authenticate();
     console.log('DB 연결 성공!');
     
-    // force: false로 변경하여 기존 테이블 유지
+    // force: true로 변경하여 테이블 재생성
     await sequelize.sync({ force: false });
     
     console.log('DB 동기화 성공!');
