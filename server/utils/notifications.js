@@ -51,7 +51,8 @@ export const createNotification = async (userId, senderId, type, postId = null) 
                 const repostedPost = await Post.findByPk(postId);
                 if (repostedPost) {
                     link = `/comments/post/${postId}`;
-                    preview = repostedPost.content.substring(0, 100);
+                    // 줄바꿈 문자 제거 및 공백 정리
+                    preview = repostedPost.content.replace(/[\r\n]+/g, ' ').trim().substring(0, 100);
                 }
                 break;
         }
