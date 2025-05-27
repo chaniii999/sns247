@@ -4,7 +4,7 @@ import { Notification, Post, User, Comment } from '../models/index.js';
  * 알림 생성 헬퍼 함수
  * @param {number} userId - 알림을 받을 사용자 ID
  * @param {number} senderId - 알림을 발생시킨 사용자 ID
- * @param {'like'|'comment'|'follow'} type - 알림 타입
+ * @param {'like'|'comment'|'follow'|'repost'} type - 알림 타입
  * @param {number|null} postId - 관련 게시물 ID (필요시)
  */
 export const createNotification = async (userId, senderId, type, postId = null) => {
@@ -55,7 +55,7 @@ export const createNotification = async (userId, senderId, type, postId = null) 
                 break;
         }
 
-        await Notification.create({
+        const notification = await Notification.create({
             userId,
             senderId,
             type,
@@ -64,7 +64,29 @@ export const createNotification = async (userId, senderId, type, postId = null) 
             preview,
             read: false
         });
+
+        // 알림 생성 후 실시간으로 전송
+        const io = global.io;
+        if (io) {
+            const sender = await User.findByPk(senderId, {
+                attributes: ['id', 'name', 'email', 'profileImage']
+            });
+
+            // 알림 데이터 구성
+            const notificationData = {
+                ...notification.toJSON(),
+                sender,
+                createdAt: new Date().toISOString()
+            };
+
+            // 해당 사용자의 룸으로 알림 전송
+            io.to(`user_${userId}`).emit('newNotification', notificationData);
+            console.log(`Notification sent to user_${userId}:`, notificationData);
+        }
+
+        return notification;
     } catch (error) {
         console.error('Error creating notification:', error);
+        throw error;
     }
 }; 

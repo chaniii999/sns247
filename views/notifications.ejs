@@ -255,25 +255,179 @@
 
     <%- include('partials/navigation') %>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 알림 읽음 처리
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', async function() {
+        // Socket.IO 연결 설정
+        const socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
+
+        // 연결 성공 시
+        socket.on('connect', () => {
+            console.log('Socket.IO connected');
+            // 사용자 인증
+            socket.emit('authenticate', '<%= currentUser.id %>');
+        });
+
+        // 연결 실패 시
+        socket.on('connect_error', (error) => {
+            console.error('Socket.IO connection error:', error);
+        });
+
+        // 재연결 시도 시
+        socket.on('reconnecting', (attemptNumber) => {
+            console.log('Socket.IO reconnecting...', attemptNumber);
+        });
+
+        // 새로운 알림 수신
+        socket.on('newNotification', (notification) => {
+            console.log('New notification received:', notification);
+            
+            // 알림 목록의 맨 위에 새 알림 추가
+            const notificationsList = document.querySelector('.main-content');
+            const noNotifications = document.querySelector('.no-notifications');
+            
+            if (noNotifications) {
+                notificationsList.innerHTML = '';
+            }
+
+            const notificationElement = createNotificationElement(notification);
+            notificationsList.insertBefore(notificationElement, notificationsList.firstChild);
+
+            // 알림 소리 재생
+            playNotificationSound();
+
+            // 알림 배지 업데이트
+            updateNotificationBadge();
+        });
+
+        // 알림 요소 생성 함수
+        function createNotificationElement(notification) {
+            const element = document.createElement('a');
+            element.href = notification.link;
+            element.className = `notification-item unread`;
+            element.dataset.notificationId = notification.id;
+
+            let previewHtml = '';
+            if (notification.preview) {
+                try {
+                    const preview = JSON.parse(notification.preview);
+                    previewHtml = `
+                        <div class="notification-preview">
+                            ${preview.postContent ? `
+                                <div class="preview-post">
+                                    <i class="bi bi-file-text"></i>
+                                    ${preview.postContent}
+                                </div>
+                            ` : ''}
+                            <div class="preview-comment">
+                                <i class="bi bi-chat-left-text"></i>
+                                <strong>${preview.commentContent}</strong>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    previewHtml = `
+                        <div class="notification-preview">
+                            <div class="preview-comment">
+                                <i class="bi bi-chat-left-text"></i>
+                                <strong>${notification.preview}</strong>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            element.innerHTML = `
+                <div class="notification-icon ${notification.type}">
+                    ${getNotificationIcon(notification.type)}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-text">
+                        <strong>${notification.sender.name}</strong>
+                        ${getNotificationText(notification.type)}
+                        ${previewHtml}
+                    </div>
+                    <div class="notification-time">
+                        ${new Date(notification.createdAt).toLocaleString('ko-KR')}
+                    </div>
+                </div>
+            `;
+
+            // 알림 클릭 이벤트 처리
+            element.addEventListener('click', async function(e) {
                 const notificationId = this.dataset.notificationId;
-                
                 try {
                     const response = await fetch(`/notifications/${notificationId}/read`, {
                         method: 'POST'
                     });
-                    
                     if (response.ok) {
                         this.classList.remove('unread');
+                        updateNotificationBadge();
                     }
                 } catch (error) {
                     console.error('Error marking notification as read:', error);
                 }
             });
-        });
+
+            return element;
+        }
+
+        // 알림 배지 업데이트 함수
+        function updateNotificationBadge() {
+            const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+            }
+        }
+
+        // 알림 타입별 아이콘 반환
+        function getNotificationIcon(type) {
+            switch (type) {
+                case 'like':
+                    return '<i class="bi bi-heart-fill"></i>';
+                case 'comment':
+                    return '<i class="bi bi-chat-fill"></i>';
+                case 'follow':
+                    return '<i class="bi bi-person-plus-fill"></i>';
+                case 'repost':
+                    return '<i class="bi bi-repeat"></i>';
+                default:
+                    return '';
+            }
+        }
+
+        // 알림 타입별 텍스트 반환
+        function getNotificationText(type) {
+            switch (type) {
+                case 'like':
+                    return '님이 회원님의 게시물을 좋아합니다.';
+                case 'comment':
+                    return '님이 회원님의 게시물에 댓글을 남겼습니다.';
+                case 'follow':
+                    return '님이 회원님을 팔로우하기 시작했습니다.';
+                case 'repost':
+                    return '님이 회원님의 게시물을 리포스트했습니다.';
+                default:
+                    return '';
+            }
+        }
+
+        // 알림 소리 재생
+        function playNotificationSound() {
+            const audio = new Audio('/sounds/notification.mp3');
+            audio.play().catch(error => {
+                console.log('알림 소리를 재생할 수 없습니다:', error);
+            });
+        }
+
+        // 초기 알림 배지 업데이트
+        updateNotificationBadge();
     </script>
 </body>
 </html> 

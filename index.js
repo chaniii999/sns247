@@ -14,6 +14,8 @@ import profileRouter from './server/routes/profile.js';
 import commentRoutes from './server/routes/comments.js';
 import searchRoutes from './server/routes/search.js';
 import notificationRoutes from './server/routes/notifications.js';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 // 환경 변수 설정
 dotenv.config();
@@ -21,6 +23,11 @@ dotenv.config();
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
+// Socket.IO를 전역으로 설정
+global.io = io;
 
 // views 디렉토리 설정
 app.set('views', path.join(__dirname, 'views'));
@@ -92,10 +99,24 @@ const syncDatabase = async () => {
 
 syncDatabase();
 
+// Socket.IO 연결 처리
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    // 사용자 인증 및 소켓 연결
+    socket.on('authenticate', (userId) => {
+        socket.join(`user_${userId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
+
 // 서버 시작
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`서버 시작!\n포트번호: ${PORT}`);
+httpServer.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 
