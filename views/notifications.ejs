@@ -120,18 +120,14 @@
             gap: 12px;
         }
 
-        .preview-post, .preview-comment {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 4px 0;
-        }
-
         .preview-post {
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 12px;
             font-size: 13px;
             color: #657786;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         }
 
         .preview-comment {
@@ -141,6 +137,9 @@
             padding: 8px 12px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         }
 
         .notification-preview i {
@@ -151,6 +150,52 @@
 
         .preview-post i {
             color: #657786;
+        }
+
+        .preview-comment i {
+            color: #0d6efd;
+        }
+
+        .preview-post span,
+        .preview-comment span {
+            flex: 1;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .preview-original,
+        .preview-repost {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .preview-original:last-child,
+        .preview-repost:last-child {
+            border-bottom: none;
+        }
+
+        .preview-original i,
+        .preview-repost i {
+            font-size: 1.1em;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .preview-original i {
+            color: #6c757d;
+        }
+
+        .preview-repost i {
+            color: #0d6efd;
+        }
+
+        .preview-original strong,
+        .preview-repost strong {
+            color: #495057;
+            font-weight: 600;
         }
 
         /* 알림 없음 */
@@ -164,6 +209,27 @@
         .notification-type-icon {
             font-size: 20px;
             margin-right: 8px;
+        }
+
+        .preview-reposter {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            margin-top: 4px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .preview-reposter i {
+            color: #6c757d;
+            font-size: 1.1em;
+            margin-top: 2px;
+        }
+
+        .preview-reposter span {
+            flex: 1;
+            word-break: break-word;
+            color: #495057;
         }
     </style>
 </head>
@@ -241,7 +307,17 @@
                             <% } else if (notification.type === 'follow') { %>
                                 님이 회원님을 팔로우하기 시작했습니다.
                             <% } else if (notification.type === 'repost') { %>
-                                님이 회원님의 게시물을 리포스트했습니다.
+                                <div class="notification-text">
+                                    <strong><%= notification.sender.name %></strong>님이 회원님의 글을 리포스트했습니다.
+                                </div>
+                                <% if (notification.preview) { %>
+                                    <div class="notification-preview">
+                                        <div class="preview-post">
+                                            <i class="bi bi-file-text"></i>
+                                            <%= notification.preview %>
+                                        </div>
+                                    </div>
+                                <% } %>
                             <% } %>
                         </div>
                         <div class="notification-time">

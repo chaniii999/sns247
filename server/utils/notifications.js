@@ -47,9 +47,10 @@ export const createNotification = async (userId, senderId, type, postId = null) 
                 link = `/profile/${senderId}`;
                 break;
             case 'repost':
-                link = `/comments/post/${postId}`;
+                // 리포스트 알림 생성
                 const repostedPost = await Post.findByPk(postId);
                 if (repostedPost) {
+                    link = `/comments/post/${postId}`;
                     preview = repostedPost.content.substring(0, 100);
                 }
                 break;
