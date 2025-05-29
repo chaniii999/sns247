@@ -269,7 +269,7 @@
         <div class="profile-section">
             <div class="profile-header">
                 <div class="profile-image-container" onclick="handleProfileImageClick()">
-                    <img src="<%= user.profileImage || '/images/default-profile.png' %>" 
+                    <img src="<%= profileUser.profileImage || '/images/default-profile.png' %>" 
                          alt="프로필" 
                          class="profile-image"
                          id="profileImage">
@@ -283,25 +283,29 @@
                            onchange="handleProfileImageChange(event)">
                 </div>
                 <div class="profile-info">
-                    <h4><%= user.name %></h4>
-                    <p class="text-muted">@<%= user.email.split('@')[0] %></p>
+                    <h4><%= profileUser.name %></h4>
+                    <p class="text-muted">@<%= profileUser.email.split('@')[0] %></p>
                     <div class="profile-stats">
                         <div class="stat-item">
                             <div class="stat-value"><%= posts.length %></div>
                             <div class="stat-label">게시물</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value"><%= user.followers ? user.followers.length : 0 %></div>
+                            <div class="stat-value"><%= profileUser.followers ? profileUser.followers.length : 0 %></div>
                             <div class="stat-label">팔로워</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value"><%= user.following ? user.following.length : 0 %></div>
+                            <div class="stat-value"><%= profileUser.following ? profileUser.following.length : 0 %></div>
                             <div class="stat-label">팔로잉</div>
                         </div>
                     </div>
-                    <% if (currentUser && currentUser.id === user.id) { %>
+                    <% if (currentUser && currentUser.id === profileUser.id) { %>
                         <button class="profile-edit-btn" onclick="showProfileEditModal()">
                             프로필 수정
+                        </button>
+                    <% } else { %>
+                        <button class="profile-edit-btn" onclick="handleFollow()">
+                            <%= isFollowing ? '언팔로우' : '팔로우' %>
                         </button>
                     <% } %>
                 </div>
@@ -484,14 +488,16 @@
 
         // 프로필 이미지 클릭 처리
         function handleProfileImageClick() {
-            console.log('Profile image container clicked');
-            const input = document.getElementById('profileImageInput');
-            if (input) {
-                console.log('Triggering file input click');
-                input.click();
-            } else {
-                console.error('File input element not found');
-            }
+            <% if (currentUser && currentUser.id === profileUser.id) { %>
+                console.log('Profile image container clicked');
+                const input = document.getElementById('profileImageInput');
+                if (input) {
+                    console.log('Triggering file input click');
+                    input.click();
+                } else {
+                    console.error('File input element not found');
+                }
+            <% } %>
         }
 
         // 프로필 이미지 변경 처리
@@ -555,6 +561,36 @@
         document.getElementById('profileEditModal').addEventListener('hidden.bs.modal', function () {
             document.getElementById('profileImage').focus();
         });
+
+        // 팔로우/언팔로우 처리
+        async function handleFollow() {
+            try {
+                const response = await fetch(`/profile/<%= profileUser.id %>/follow`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const followBtn = document.querySelector('.profile-edit-btn');
+                    if (data.isFollowing) {
+                        followBtn.textContent = '언팔로우';
+                    } else {
+                        followBtn.textContent = '팔로우';
+                    }
+                    // 팔로워 수 업데이트
+                    const followerCount = document.querySelector('.stat-item:nth-child(2) .stat-value');
+                    followerCount.textContent = data.followerCount;
+                } else {
+                    alert('팔로우 처리 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error handling follow:', error);
+                alert('팔로우 처리 중 오류가 발생했습니다.');
+            }
+        }
     </script>
 </body>
 </html>

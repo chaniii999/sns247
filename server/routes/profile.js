@@ -55,6 +55,7 @@ router.get('/', (req, res) => {
 // 프로필 페이지 조회
 router.get('/:userId', async (req, res) => {
   try {
+    // 사용자 정보 조회
     const user = await User.findByPk(req.params.userId, {
       attributes: ['id', 'name', 'email', 'profileImage', 'createdAt']
     });
@@ -62,6 +63,10 @@ router.get('/:userId', async (req, res) => {
     if (!user) {
       return res.status(404).send('사용자를 찾을 수 없습니다.');
     }
+
+    // 팔로워/팔로잉 수 조회
+    const followerCount = await user.countFollowers();
+    const followingCount = await user.countFollowing();
 
     // 사용자의 게시물 조회
     const posts = await Post.findAll({
@@ -82,6 +87,22 @@ router.get('/:userId', async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
+    // 현재 사용자가 해당 프로필 사용자를 팔로우하고 있는지 확인
+    let isFollowing = false;
+    if (req.user) {
+      const follower = await user.getFollowers({
+        where: { id: req.user.id }
+      });
+      isFollowing = follower.length > 0;
+    }
+
+    // 사용자 정보에 팔로워/팔로잉 수 추가
+    const userData = {
+      ...user.toJSON(),
+      followers: { length: followerCount },
+      following: { length: followingCount }
+    };
+
     res.render('profile', {
       layout: 'layouts/main',
       title: `${user.name}의 프로필`,
@@ -89,9 +110,10 @@ router.get('/:userId', async (req, res) => {
       backButton: { url: '/feed' },
       currentPage: 'profile',
       user: req.user,
-      profileUser: user,
+      profileUser: userData,
       posts: posts,
-      currentUser: req.user
+      currentUser: req.user,
+      isFollowing: isFollowing
     });
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -175,6 +197,46 @@ router.post('/update-profile-image', upload.single('profileImage'), async (req, 
         }
         res.status(500).json({ error: '프로필 사진 업데이트 중 오류가 발생했습니다.' });
     }
+});
+
+// 팔로우/언팔로우 처리
+router.post('/:userId/follow', isAuthenticated, async (req, res) => {
+  try {
+    const targetUser = await User.findByPk(req.params.userId);
+    if (!targetUser) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 자기 자신을 팔로우할 수 없음
+    if (targetUser.id === req.user.id) {
+      return res.status(400).json({ error: '자기 자신을 팔로우할 수 없습니다.' });
+    }
+
+    const follower = await targetUser.getFollowers({
+      where: { id: req.user.id }
+    });
+
+    let isFollowing = false;
+    if (follower.length > 0) {
+      // 언팔로우
+      await targetUser.removeFollower(req.user.id);
+    } else {
+      // 팔로우
+      await targetUser.addFollower(req.user.id);
+      isFollowing = true;
+    }
+
+    // 업데이트된 팔로워 수 조회
+    const updatedFollowerCount = await targetUser.countFollowers();
+
+    res.json({
+      isFollowing: isFollowing,
+      followerCount: updatedFollowerCount
+    });
+  } catch (error) {
+    console.error('Error handling follow:', error);
+    res.status(500).json({ error: '팔로우 처리 중 오류가 발생했습니다.' });
+  }
 });
 
 export default router;

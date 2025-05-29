@@ -3,6 +3,7 @@ import User from './User.js';
 import Post from './Post.js';
 import Like from './Like.js';
 import Comment from './Comment.js';
+import Follow from './Follow.js';
 import NotificationFactory from './notification.js';
 
 const Notification = NotificationFactory(sequelize);
@@ -10,6 +11,21 @@ const Notification = NotificationFactory(sequelize);
 // User와 Post 관계 설정
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
 User.hasMany(Post, { foreignKey: 'authorId' });
+
+// 팔로워/팔로잉 관계 설정
+User.belongsToMany(User, {
+  through: 'Follows',
+  as: 'followers',
+  foreignKey: 'followingId',
+  otherKey: 'followerId'
+});
+
+User.belongsToMany(User, {
+  through: 'Follows',
+  as: 'following',
+  foreignKey: 'followerId',
+  otherKey: 'followingId'
+});
 
 // Like 관계 설정
 Post.belongsToMany(User, { 
@@ -46,5 +62,6 @@ export {
   Post,
   Like,
   Comment,
+  Follow,
   Notification
 };
