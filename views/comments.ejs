@@ -1,0 +1,46 @@
+<script src="/js/post.js"></script>
+<script>
+    // 댓글 작성 폼 제출 이벤트
+    document.getElementById('commentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const postId = this.dataset.postId;
+        const content = this.querySelector('textarea').value;
+        
+        try {
+            const response = await fetch(`/comments/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const commentsContainer = document.getElementById('comments');
+                const commentElement = createCommentElement(data.comment);
+                commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                this.reset();
+            }
+        } catch (error) {
+            console.error('Error submitting comment:', error);
+        }
+    });
+
+    // 댓글 요소 생성 함수
+    function createCommentElement(comment) {
+        const div = document.createElement('div');
+        div.className = 'comment';
+        div.innerHTML = `
+            <div class="comment-header">
+                <img src="${comment.commentAuthor.profileImage || '/images/default-profile.png'}" 
+                     alt="프로필" 
+                     class="comment-profile-image">
+                <span class="comment-author">${comment.commentAuthor.name}</span>
+                <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+            </div>
+            <div class="comment-content">${comment.content}</div>
+        `;
+        return div;
+    }
+</script> 

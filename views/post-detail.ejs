@@ -567,7 +567,7 @@
 
         <!-- 댓글 작성 폼 -->
         <div class="comment-form">
-            <form id="commentForm" class="d-flex gap-2">
+            <form id="commentForm" class="d-flex gap-2" data-post-id="<%= post.id %>">
                 <input type="text" class="form-control" placeholder="댓글을 작성하세요..." required>
                 <button type="submit" class="btn btn-primary">작성</button>
             </form>
@@ -646,12 +646,10 @@
         </div>
     </div>
 
+    <!-- 스크립트 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/post.js"></script>
     <script>
-        // PostManager 인스턴스 생성
-        const postManager = new PostManager();
-
         // 리포스트 모달 관련 함수들
         function showRepostModal(postId) {
             const modal = document.getElementById('repostModal');
@@ -689,32 +687,59 @@
             }
         }
 
-        // 댓글 작성 폼 제출 처리
+        // 댓글 작성 폼 제출 이벤트
         document.getElementById('commentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+            const postId = this.dataset.postId;
             const content = this.querySelector('input').value;
             
             try {
-                const response = await fetch('/comments/post/<%= post.id %>', {
+                const response = await fetch(`/comments/post/${postId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ content })
                 });
                 
                 if (response.ok) {
-                    window.location.reload();
+                    const data = await response.json();
+                    const commentsContainer = document.querySelector('.comments');
+                    const commentElement = createCommentElement(data);
+                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                    this.reset();
                 } else {
-                    alert('댓글 작성에 실패했습니다.');
+                    const data = await response.json();
+                    alert(data.error || '댓글 작성에 실패했습니다.');
                 }
             } catch (error) {
-                console.error('Error creating comment:', error);
+                console.error('Error submitting comment:', error);
                 alert('댓글 작성 중 오류가 발생했습니다.');
             }
         });
+
+        // 댓글 요소 생성 함수
+        function createCommentElement(comment) {
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.innerHTML = `
+                <div class="comment-header">
+                    <img src="${comment.commentAuthor.profileImage || '/images/default-profile.png'}" 
+                         alt="프로필" 
+                         class="profile-image">
+                    <div>
+                        <strong>${comment.commentAuthor.name}</strong>
+                        <div class="text-muted" style="font-size: 14px;">
+                            ${new Date(comment.createdAt).toLocaleString('ko-KR')}
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-content">
+                    ${comment.content}
+                </div>
+            `;
+            return div;
+        }
     </script>
 </body>
 </html>
