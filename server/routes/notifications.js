@@ -81,4 +81,24 @@ router.get('/unread-count', isAuthenticated, async (req, res) => {
     }
 });
 
+// 모든 알림을 읽음 처리
+router.post('/mark-all-read', isAuthenticated, async (req, res) => {
+    try {
+        await Notification.update(
+            { read: true },
+            {
+                where: {
+                    userId: req.user.id,
+                    read: false
+                }
+            }
+        );
+
+        res.json({ message: '모든 알림이 읽음 처리되었습니다.' });
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        res.status(500).json({ error: '알림 처리 중 오류가 발생했습니다.' });
+    }
+});
+
 export default router; 

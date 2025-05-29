@@ -231,6 +231,24 @@
             word-break: break-word;
             color: #495057;
         }
+
+        /* 모두 확인 버튼 스타일 */
+        #markAllRead {
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        #markAllRead:hover {
+            opacity: 0.8;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+        }
     </style>
 </head>
 <body>
@@ -238,6 +256,9 @@
     <div class="header">
         <div class="header-content">
             <h5 class="mb-0">알림</h5>
+            <button id="markAllRead" class="btn btn-link text-primary p-0" style="font-size: 14px;">
+                모두 확인
+            </button>
             <div class="ms-auto position-relative">
                 <img src="<%= currentUser.profileImage || '/images/default-profile.png' %>" 
                      alt="프로필" 
@@ -345,6 +366,39 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 초기 알림 카운트 업데이트
             updateNotificationCount();
+
+            // 모두 확인 버튼 이벤트 리스너
+            document.getElementById('markAllRead').addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/notifications/mark-all-read', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // 모든 알림 항목의 unread 클래스 제거
+                        document.querySelectorAll('.notification-item.unread').forEach(item => {
+                            item.classList.remove('unread');
+                        });
+
+                        // 알림 카운트 업데이트
+                        await updateNotificationCount();
+
+                        // 모두 확인 버튼 비활성화
+                        this.style.opacity = '0.5';
+                        this.style.pointerEvents = 'none';
+
+                        // Socket.IO를 통해 다른 클라이언트에게 알림
+                        socket.emit('notificationsRead', {
+                            userId: '<%= currentUser.id %>'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error marking all notifications as read:', error);
+                }
+            });
         });
 
         // 연결 성공 시
@@ -357,43 +411,22 @@
         // 알림 카운트 업데이트 함수
         async function updateNotificationCount() {
             try {
-                console.log('Updating notification count...');
-                const response = await fetch('/notifications/count');
+                const response = await fetch('/notifications/unread-count');
                 const data = await response.json();
-                console.log('Notification count:', data.count);
+                const badge = document.getElementById('notification-badge');
                 
-                // 모든 페이지의 알림 배지 업데이트
-                const badges = document.querySelectorAll('.notification-badge');
-                badges.forEach(badge => {
-                    badge.textContent = data.count;
-                    badge.style.display = data.count > 0 ? 'flex' : 'none';
-                });
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
             } catch (error) {
                 console.error('Error updating notification count:', error);
             }
         }
-
-        // 새로운 알림 수신
-        socket.on('newNotification', (notification) => {
-            console.log('New notification received:', notification);
-            
-            // 알림 목록의 맨 위에 새 알림 추가
-            const notificationsList = document.querySelector('.main-content');
-            const noNotifications = document.querySelector('.no-notifications');
-            
-            if (noNotifications) {
-                notificationsList.innerHTML = '';
-            }
-
-            const notificationElement = createNotificationElement(notification);
-            notificationsList.insertBefore(notificationElement, notificationsList.firstChild);
-
-            // 알림 소리 재생
-            playNotificationSound();
-
-            // 알림 카운트 업데이트
-            updateNotificationCount();
-        });
 
         // 알림 클릭 이벤트 처리
         document.querySelectorAll('.notification-item').forEach(item => {
@@ -405,7 +438,13 @@
                     });
                     if (response.ok) {
                         this.classList.remove('unread');
-                        updateNotificationCount();
+                        await updateNotificationCount();
+
+                        // Socket.IO를 통해 다른 클라이언트에게 알림
+                        socket.emit('notificationRead', {
+                            userId: '<%= currentUser.id %>',
+                            notificationId: notificationId
+                        });
                     }
                 } catch (error) {
                     console.error('Error marking notification as read:', error);
@@ -413,117 +452,32 @@
             });
         });
 
-        // 알림 요소 생성 함수
-        function createNotificationElement(notification) {
-            const element = document.createElement('a');
-            element.href = notification.link;
-            element.className = `notification-item unread`;
-            element.dataset.notificationId = notification.id;
+        // 다른 클라이언트에서 알림이 읽힘 처리되었을 때
+        socket.on('notificationRead', async (data) => {
+            if (data.userId === '<%= currentUser.id %>') {
+                const notificationItem = document.querySelector(`[data-notification-id="${data.notificationId}"]`);
+                if (notificationItem) {
+                    notificationItem.classList.remove('unread');
+                }
+                await updateNotificationCount();
+            }
+        });
 
-            let previewHtml = '';
-            if (notification.preview) {
-                try {
-                    const preview = JSON.parse(notification.preview);
-                    previewHtml = `
-                        <div class="notification-preview">
-                            ${preview.postContent ? `
-                                <div class="preview-post">
-                                    <i class="bi bi-file-text"></i>
-                                    ${preview.postContent}
-                                </div>
-                            ` : ''}
-                            <div class="preview-comment">
-                                <i class="bi bi-chat-left-text"></i>
-                                <strong>${preview.commentContent}</strong>
-                            </div>
-                        </div>
-                    `;
-                } catch (e) {
-                    previewHtml = `
-                        <div class="notification-preview">
-                            <div class="preview-comment">
-                                <i class="bi bi-chat-left-text"></i>
-                                <strong>${notification.preview}</strong>
-                            </div>
-                        </div>
-                    `;
+        // 다른 클라이언트에서 모든 알림이 읽힘 처리되었을 때
+        socket.on('allNotificationsRead', async (data) => {
+            if (data.userId === '<%= currentUser.id %>') {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                await updateNotificationCount();
+                
+                const markAllReadBtn = document.getElementById('markAllRead');
+                if (markAllReadBtn) {
+                    markAllReadBtn.style.opacity = '0.5';
+                    markAllReadBtn.style.pointerEvents = 'none';
                 }
             }
-
-            element.innerHTML = `
-                <div class="notification-icon ${notification.type}">
-                    ${getNotificationIcon(notification.type)}
-                </div>
-                <div class="notification-content">
-                    <div class="notification-text">
-                        <strong>${notification.sender.name}</strong>
-                        ${getNotificationText(notification.type)}
-                        ${previewHtml}
-                    </div>
-                    <div class="notification-time">
-                        ${new Date(notification.createdAt).toLocaleString('ko-KR')}
-                    </div>
-                </div>
-            `;
-
-            // 알림 클릭 이벤트 처리
-            element.addEventListener('click', async function(e) {
-                const notificationId = this.dataset.notificationId;
-                try {
-                    const response = await fetch(`/notifications/${notificationId}/read`, {
-                        method: 'POST'
-                    });
-                    if (response.ok) {
-                        this.classList.remove('unread');
-                        updateNotificationCount();
-                    }
-                } catch (error) {
-                    console.error('Error marking notification as read:', error);
-                }
-            });
-
-            return element;
-        }
-
-        // 알림 타입별 아이콘 반환
-        function getNotificationIcon(type) {
-            switch (type) {
-                case 'like':
-                    return '<i class="bi bi-heart-fill"></i>';
-                case 'comment':
-                    return '<i class="bi bi-chat-fill"></i>';
-                case 'follow':
-                    return '<i class="bi bi-person-plus-fill"></i>';
-                case 'repost':
-                    return '<i class="bi bi-repeat"></i>';
-                default:
-                    return '';
-            }
-        }
-
-        // 알림 타입별 텍스트 반환
-        function getNotificationText(type) {
-            switch (type) {
-                case 'like':
-                    return '님이 회원님의 게시물을 좋아합니다.';
-                case 'comment':
-                    return '님이 회원님의 게시물에 댓글을 남겼습니다.';
-                case 'follow':
-                    return '님이 회원님을 팔로우하기 시작했습니다.';
-                case 'repost':
-                    return '님이 회원님의 게시물을 리포스트했습니다.';
-                default:
-                    return '';
-            }
-        }
-
-        // 알림 소리 재생
-        function playNotificationSound() {
-            const audio = new Audio('/sounds/notification.mp3');
-            audio.play().catch(error => {
-                console.log('알림 소리를 재생할 수 없습니다:', error);
-            });
-        }
+        });
     </script>
 </body>
 </html> 
