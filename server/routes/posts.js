@@ -100,63 +100,54 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 좋아요 토글 라우트
-router.post('/:postId/like', async (req, res) => {
-  try {
-    const post = await Post.findByPk(req.params.postId, {
-      include: [
-        {
-          model: User,
-          as: 'likedBy',
-          attributes: ['id'],
-          through: { attributes: [] }
+// 좋아요 토글
+router.post('/:postId/like', isAuthenticated, async (req, res) => {
+    try {
+        const post = await Post.findByPk(req.params.postId);
+        
+        if (!post) {
+            return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
         }
-      ]
-    });
 
-    if (!post) {
-      return res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
+        // 이미 좋아요를 눌렀는지 확인
+        const existingLike = await Like.findOne({
+            where: {
+                PostId: req.params.postId,
+                UserId: req.user.id
+            }
+        });
+
+        if (existingLike) {
+            // 좋아요 취소
+            await existingLike.destroy();
+            await post.decrement('likes');
+            
+            res.json({ liked: false });
+        } else {
+            // 좋아요 추가
+            await Like.create({
+                PostId: req.params.postId,
+                UserId: req.user.id
+            });
+            await post.increment('likes');
+
+            // 알림 생성 (자신의 게시물이 아닌 경우에만)
+            if (post.authorId !== req.user.id) {
+                await createNotification(
+                    post.authorId,
+                    req.user.id,
+                    'like',
+                    post.id,
+                    post.content
+                );
+            }
+            
+            res.json({ liked: true });
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+        res.status(500).json({ error: '좋아요 처리 중 오류가 발생했습니다.' });
     }
-
-    // 이미 좋아요를 눌렀는지 확인
-    const existingLike = await Like.findOne({
-      where: {
-        UserId: req.user.id,
-        PostId: req.params.postId
-      }
-    });
-
-    if (existingLike) {
-      // 좋아요 취소
-      await existingLike.destroy();
-      await post.update({
-        likes: Math.max(0, post.likes - 1)
-      });
-      return res.json({ 
-        liked: false, 
-        likes: post.likes,
-        message: '좋아요가 취소되었습니다.' 
-      });
-    } else {
-      // 좋아요 추가
-      await Like.create({
-        UserId: req.user.id,
-        PostId: req.params.postId
-      });
-      await post.update({
-        likes: post.likes + 1
-      });
-      await createNotification(post.authorId, req.user.id, 'like', post.id);
-      return res.json({ 
-        liked: true, 
-        likes: post.likes,
-        message: '좋아요가 추가되었습니다.' 
-      });
-    }
-  } catch (error) {
-    console.error('Error toggling like:', error);
-    res.status(500).json({ error: '좋아요 처리 중 오류가 발생했습니다.' });
-  }
 });
 
 // 게시물 수정

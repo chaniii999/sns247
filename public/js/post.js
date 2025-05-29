@@ -2,6 +2,7 @@
 class PostManager {
     constructor() {
         this.initializeEventListeners();
+        this.updateNotificationCount(); // 초기 알림 카운트 로드
     }
 
     initializeEventListeners() {
@@ -56,11 +57,18 @@ class PostManager {
 
             if (response.ok) {
                 const data = await response.json();
-                const likeCount = button.querySelector('.like-count');
+                const likeCount = button.querySelector('.likes-count');
                 if (likeCount) {
-                    likeCount.textContent = parseInt(likeCount.textContent) + (data.liked ? 1 : -1);
+                    const currentCount = parseInt(likeCount.textContent);
+                    likeCount.textContent = data.liked ? currentCount + 1 : currentCount - 1;
                 }
+                
+                // 좋아요 버튼 상태 업데이트
                 button.classList.toggle('liked', data.liked);
+                const heartIcon = button.querySelector('i');
+                if (heartIcon) {
+                    heartIcon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
+                }
 
                 // 알림 카운트 업데이트
                 await this.updateNotificationCount();
@@ -227,15 +235,22 @@ class PostManager {
         const content = document.getElementById('repostContent').value;
 
         try {
-            const response = await fetch('/posts/repost', {
+            const response = await fetch(`/posts/${postId}/repost`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ postId, content })
+                body: JSON.stringify({ content })
             });
 
             if (response.ok) {
+                const modal = document.getElementById('repostModal');
+                const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                bootstrapModal.hide();
+                
+                // 알림 카운트 업데이트
+                await this.updateNotificationCount();
+                
                 window.location.reload();
             } else {
                 const data = await response.json();

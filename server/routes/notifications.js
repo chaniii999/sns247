@@ -64,4 +64,21 @@ router.post('/:notificationId/read', isAuthenticated, async (req, res) => {
     }
 });
 
+// 읽지 않은 알림 카운트 조회
+router.get('/unread-count', isAuthenticated, async (req, res) => {
+    try {
+        const count = await Notification.count({
+            where: {
+                userId: req.user.id,
+                read: false
+            }
+        });
+
+        res.json({ count });
+    } catch (error) {
+        console.error('Error fetching unread notification count:', error);
+        res.status(500).json({ error: '알림 카운트 조회 중 오류가 발생했습니다.' });
+    }
+});
+
 export default router; 
