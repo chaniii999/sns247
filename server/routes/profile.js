@@ -1,5 +1,5 @@
 import express from 'express';
-import { Post, User } from '../models/index.js';
+import { Post, User, Notification } from '../models/index.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -224,6 +224,15 @@ router.post('/:userId/follow', isAuthenticated, async (req, res) => {
       // 팔로우
       await targetUser.addFollower(req.user.id);
       isFollowing = true;
+
+      // 팔로우 알림 생성
+      await Notification.create({
+        userId: targetUser.id, // 알림을 받을 사용자 (팔로우 당한 사람)
+        senderId: req.user.id, // 알림을 보낸 사용자 (팔로우한 사람)
+        type: 'follow',
+        link: `/profile/${req.user.id}`,
+        preview: `${req.user.name}님이 회원님을 팔로우하기 시작했습니다.`
+      });
     }
 
     // 업데이트된 팔로워 수 조회
