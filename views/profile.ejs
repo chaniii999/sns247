@@ -62,11 +62,47 @@
             margin-bottom: 20px;
         }
 
-        .profile-image {
-            width: 100px;
-            height: 100px;
+        .profile-image-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .profile-image {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            transition: filter 0.3s ease;
+        }
+
+        .profile-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .profile-image-overlay i {
+            color: white;
+            font-size: 24px;
+        }
+
+        .profile-image-container:hover .profile-image-overlay {
+            opacity: 1;
+        }
+
+        .profile-image-container:hover .profile-image {
+            filter: brightness(0.8);
         }
 
         .profile-info {
@@ -232,12 +268,23 @@
         <!-- 프로필 섹션 -->
         <div class="profile-section">
             <div class="profile-header">
-                <img src="<%= user.profileImage || '/images/default-profile.png' %>" 
-                     alt="프로필" 
-                     class="profile-image">
+                <div class="profile-image-container" onclick="handleProfileImageClick()">
+                    <img src="<%= user.profileImage || '/images/default-profile.png' %>" 
+                         alt="프로필" 
+                         class="profile-image"
+                         id="profileImage">
+                    <div class="profile-image-overlay">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                    <input type="file" 
+                           id="profileImageInput" 
+                           accept="image/*" 
+                           style="display: none;"
+                           onchange="handleProfileImageChange(event)">
+                </div>
                 <div class="profile-info">
-                    <div class="profile-name"><%= user.name %></div>
-                    <div class="profile-email"><%= user.email %></div>
+                    <h4><%= user.name %></h4>
+                    <p class="text-muted">@<%= user.email.split('@')[0] %></p>
                     <div class="profile-stats">
                         <div class="stat-item">
                             <div class="stat-value"><%= posts.length %></div>
@@ -279,12 +326,12 @@
     </div>
 
     <!-- 프로필 수정 모달 -->
-    <div class="modal fade" id="profileEditModal" tabindex="-1">
+    <div class="modal fade" id="profileEditModal" tabindex="-1" aria-labelledby="profileEditModalLabel" aria-hidden="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">프로필 수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="profileEditModalLabel">프로필 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="profileEditForm">
@@ -363,7 +410,11 @@
 
         // 프로필 수정 모달 표시
         function showProfileEditModal() {
-            const modal = new bootstrap.Modal(document.getElementById('profileEditModal'));
+            const modal = new bootstrap.Modal(document.getElementById('profileEditModal'), {
+                keyboard: true,
+                focus: true,
+                backdrop: 'static'
+            });
             modal.show();
         }
 
@@ -381,6 +432,8 @@
                 });
 
                 if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('profileEditModal'));
+                    modal.hide();
                     window.location.reload();
                 } else {
                     alert('닉네임 변경에 실패했습니다.');
@@ -428,6 +481,80 @@
                 alert('리포스트 중 오류가 발생했습니다.');
             }
         }
+
+        // 프로필 이미지 클릭 처리
+        function handleProfileImageClick() {
+            console.log('Profile image container clicked');
+            const input = document.getElementById('profileImageInput');
+            if (input) {
+                console.log('Triggering file input click');
+                input.click();
+            } else {
+                console.error('File input element not found');
+            }
+        }
+
+        // 프로필 이미지 변경 처리
+        async function handleProfileImageChange(event) {
+            console.log('File input change event triggered');
+            const file = event.target.files[0];
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+
+            console.log('Selected file:', file.name, file.type, file.size);
+
+            // 파일 크기 체크 (5MB 제한)
+            if (file.size > 5 * 1024 * 1024) {
+                console.log('File too large');
+                alert('파일 크기는 5MB를 초과할 수 없습니다.');
+                return;
+            }
+
+            // 이미지 파일 형식 체크
+            if (!file.type.startsWith('image/')) {
+                console.log('Invalid file type');
+                alert('이미지 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('profileImage', file);
+
+            try {
+                console.log('Uploading file...');
+                const response = await fetch('/profile/update-profile-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Upload successful:', data);
+                    // 프로필 이미지 즉시 업데이트
+                    document.getElementById('profileImage').src = data.profileImage;
+                    // 네비게이션 바의 프로필 이미지도 업데이트
+                    document.querySelectorAll('.profile-image').forEach(img => {
+                        if (img.id !== 'profileImage') {
+                            img.src = data.profileImage;
+                        }
+                    });
+                } else {
+                    const error = await response.json();
+                    console.error('Upload failed:', error);
+                    alert(error.message || '프로필 이미지 업데이트에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error updating profile image:', error);
+                alert('프로필 이미지 업데이트 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 모달이 닫힐 때 포커스 관리
+        document.getElementById('profileEditModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('profileImage').focus();
+        });
     </script>
 </body>
 </html>

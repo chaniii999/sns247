@@ -126,18 +126,40 @@ router.post('/update-name', async (req, res) => {
 
 // 프로필 사진 업데이트
 router.post('/update-profile-image', upload.single('profileImage'), async (req, res) => {
+    console.log('Profile image update request received');
+    console.log('Request file:', req.file);
+    console.log('Request user:', req.user);
+
     try {
         if (!req.file) {
+            console.log('No file uploaded');
             return res.status(400).json({ error: '이미지 파일이 필요합니다.' });
         }
 
         const profileImagePath = '/uploads/profiles/' + req.file.filename;
+        console.log('New profile image path:', profileImagePath);
         
+        // 이전 프로필 이미지가 있다면 삭제
+        const user = await User.findByPk(req.user.id);
+        console.log('Current user profile image:', user.profileImage);
+        
+        if (user.profileImage && user.profileImage !== '/images/default-profile.png') {
+            const oldImagePath = path.join(__dirname, '../../public', user.profileImage);
+            console.log('Old image path:', oldImagePath);
+            
+            if (fs.existsSync(oldImagePath)) {
+                console.log('Deleting old profile image');
+                fs.unlinkSync(oldImagePath);
+            }
+        }
+
+        console.log('Updating user profile image in database');
         await User.update(
             { profileImage: profileImagePath },
             { where: { id: req.user.id } }
         );
 
+        console.log('Profile image update successful');
         res.json({ 
             success: true, 
             profileImage: profileImagePath,
