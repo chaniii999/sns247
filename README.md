@@ -1,4 +1,4 @@
-🌐 Way To Play our sns247
+🌐 Way To Play our sns247 ! you need mysql
 1. Clone repo
 
 > git clone https://github.com/chaniii999/sns247.git
@@ -20,5 +20,5 @@ Open your browser and visit
 http://localhost:3000
 
 
-# if you need .env file, contract me. 
+### if you need .env file, contract me. 
 email: psc0729@naver.com
